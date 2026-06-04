@@ -2,9 +2,26 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
-class TaiKhoan extends Model
+// app/Models/TaiKhoan.php
+
+class TaiKhoan extends Authenticatable
 {
-    //
+    use Notifiable;
+
+    protected $table = 'taikhoan';
+    protected $primaryKey = 'MaTaiKhoan';
+    public $incrementing = false;
+    protected $keyType = 'string';
+
+    // CHỈ ĐỂ DUY NHẤT MỘT DÒNG NÀY THÔI NHÉ
+    protected $fillable = ['MaTaiKhoan', 'HoTen', 'MatKhau', 'SoDienThoai', 'VaiTro'];
+
+    public function getAuthPassword()
+    {
+        return $this->MatKhau;
+    }
+    public $timestamps = false;
 }
