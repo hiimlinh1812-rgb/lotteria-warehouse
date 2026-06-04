@@ -32,7 +32,6 @@ class XuatKhoController extends Controller
     public function create(Request $request)
     {
         $query = NguyenLieu::query();
-
         // Xử lý tìm kiếm theo tên nguyên liệu dựa trên từ khóa nhập vào từ thanh search
         if ($request->has('search') && $request->search != '') {
             $query->where('TenNguyenLieu', 'LIKE', '%' . $request->search . '%');

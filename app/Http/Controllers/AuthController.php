@@ -9,28 +9,40 @@ class AuthController extends Controller
 {
     public function showLogin()
     {
-        return view('auth.login'); // Trỏ đúng về file giao diện login của cậu
+        return view('auth.login');
     }
+
     public function login(Request $request)
     {
-        // Xác thực cơ bản
-    $request->validate([
-        'SoDienThoai' => 'required',
-        'MatKhau' => 'required',
-    ]);
+        // 1. Xác thực input
+        $request->validate([
+            'SoDienThoai' => 'required',
+            'MatKhau' => 'required',
+        ]);
 
-    // Lấy thông tin tài khoản từ database trước
-    $user = \App\Models\TaiKhoan::where('SoDienThoai', $request->SoDienThoai)->first();
+        // 2. Tìm user trong DB
+        $user = \App\Models\TaiKhoan::where('SoDienThoai', $request->SoDienThoai)->first();
 
-    // Kiểm tra nếu user tồn tại VÀ mật khẩu khớp
-    if ($user && \Illuminate\Support\Facades\Hash::check($request->MatKhau, $user->MatKhau)) {
-        Auth::login($user); // Đăng nhập thủ công
-        $request->session()->regenerate();
-        return redirect()->intended('/');
-    }
+        // 3. Kiểm tra user và mật khẩu 
+        if ($user && \Illuminate\Support\Facades\Hash::check($request->MatKhau, $user->MatKhau)) {
 
-    return back()->withErrors([
-        'SoDienThoai' => 'Số điện thoại hoặc mật khẩu không đúng!',
-    ]);
+            Auth::login($user); // Đăng nhập thủ công
+            $request->session()->regenerate();
+
+            // 4. PHÂN QUYỀN CHUYỂN HƯỚNG NGAY TẠI ĐÂY
+            if ($user->VaiTro === 'Cửa hàng trưởng') {
+                return redirect()->route('dashboard');
+            } elseif ($user->VaiTro === 'Quản lý') {
+                return redirect()->route('don-hang.index'); // Tạm thời để Quản lý vào trang đơn hàng
+            } elseif ($user->VaiTro === 'Nhân viên') {
+                // Đã sửa thành tên route chuẩn của bạn!
+                return redirect()->route('nhanvien.phieuxuat');
+            }
+        }
+
+        // Nếu sai
+        return back()->withErrors([
+            'SoDienThoai' => 'Số điện thoại hoặc mật khẩu không đúng!',
+        ]);
     }
 }
