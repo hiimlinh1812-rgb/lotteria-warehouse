@@ -21,3 +21,5 @@ Route::middleware(['auth', 'can:isCuaHangTruong'])->group(function () {
     Route::resource('nguyen-lieu', NguyenLieuController::class);
     Route::resource('tai-khoan', TaiKhoanController::class);
 });
+
+require __DIR__.'/nhap_kho.php';
