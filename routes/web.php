@@ -1,6 +1,9 @@
 <?php
-
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\NguyenLieuController;
+use App\Http\Controllers\TaiKhoanController;
+use App\Http\Controllers\DashboardController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -29,3 +32,19 @@ Route::post('/kho-chinh/kiem-ke/store', [KiemKeKhoChinhController::class, 'store
 Route::get('/quan-ly/kho-chinh/duyet', [KiemKeKhoChinhController::class, 'danhSachDuyet'])->name('quanly.khochinh.duyet');
 Route::post('/quan-ly/kho-chinh/hieu-chinh/{maPhieu}', [KiemKeKhoChinhController::class, 'hieuChinhPhieu'])->name('quanly.khochinh.hieuchinh');
 Route::post('/quan-ly/kho-chinh/giai-trinh/{maPhieu}', [KiemKeKhoChinhController::class, 'taoGiaiTrinh'])->name('quanly.khochinh.giaitrinh');
+// 1. Đường dẫn đăng nhập
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+Route::post('/login', [AuthController::class, 'login']);
+Route::get('/logout', function () {
+    auth()->logout();
+    return redirect('/login');
+})->name('logout');
+
+// 2. Các trang cần đăng nhập mới vào được
+Route::middleware(['auth', 'can:isCuaHangTruong'])->group(function () {
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    
+    Route::resource('nguyen-lieu', NguyenLieuController::class);
+    Route::resource('tai-khoan', TaiKhoanController::class);
+});

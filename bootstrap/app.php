@@ -11,8 +11,18 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Đăng ký alias 'role' cho Middleware vừa tạo
+        $middleware->alias([
+            'role' => \App\Http\Middleware\CheckVaiTro::class,
+        ]);
+
+        // ĐÓNG NGOẶC CHUẨN XÁC: Đóng mảng ] và đóng hàm );
+        $middleware->validateCsrfTokens(except: [
+            'kiem-ke-bep/store',
+            'kho-chinh/kiem-ke/store'
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
-    })->create();
+    })
+    ->create();

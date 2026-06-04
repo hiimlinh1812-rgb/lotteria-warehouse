@@ -20,6 +20,7 @@
                 <span class="badge bg-warning text-dark">Trạng thái: {{ $phiu['TrangThai'] }}</span>
             </div>
             <div class="card-body p-0">
+                <!-- BẢNG KIỂM KÊ CHÍNH -->
                 <table class="table table-bordered text-center align-middle mb-0">
                     <thead class="table-light">
                         <tr>
@@ -57,6 +58,7 @@
                     </tbody>
                 </table>
 
+                <!-- BẢNG CHI TIẾT PHIẾU XUẤT HỦY ĐÍNH KÈM -->
                 @if($phiu['PhieuHuy'])
                     <div class="p-3 bg-light border-top">
                         <div class="phieu-huy-box shadow-sm">
@@ -86,15 +88,31 @@
                 @endif
             </div>
             
-            <div class="card-footer bg-white text-end p-3">
+            <!-- KHU VỰC PHÊ DUYỆT / TỪ CHỐI PHIẾU CHUẨN HOÁ KỊCH BẢN 2.4.3 -->
+            <div class="card-footer bg-white p-3">
                 @if($phiu['TrangThai'] == 'Chờ duyệt')
-                    <form action="{{ route('quanly.chotca', $phiu['MaPhieuKiemKe']) }}" method="POST" class="d-inline">
+                    <!-- LUỒNG PHỤ 1: Luôn hiển thị ô nhập lý do và nút Từ chối để Quản lý chủ động ghi nhận sau khi đối soát bếp -->
+                    <form action="{{ route('quanly.kiemke.tuchoi', $phiu['MaPhieuKiemKe']) }}" method="POST" class="row g-2 align-items-center mb-3 border-bottom pb-3">
                         @csrf
-                        <button type="submit" class="btn btn-success btn-sm px-4 fw-bold">Xác Nhận & Chốt Ca Bếp</button>
+                        <div class="col-md-9">
+                            <input type="text" name="ghi_chu_tu_choi" class="form-control form-control-sm" placeholder="⚠️ Bắt buộc nhập ghi chú nguyên nhân sai lệch vật lý tại đây để trả về Nháp..." required>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-outline-danger btn-sm w-100 fw-bold">Từ Chối & Trả Về Nháp</button>
+                        </div>
                     </form>
-                @else
-                    <span class="text-success fw-bold">✓ Toàn bộ phân hệ đã được phê duyệt thành công</span>
                 @endif
+
+                <div class="text-end">
+                    @if($phiu['TrangThai'] == 'Chờ duyệt')
+                        <form action="{{ route('quanly.chotca', $phiu['MaPhieuKiemKe']) }}" method="POST" class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-success btn-sm px-4 fw-bold">Xác Nhận & Chốt Ca Bếp</button>
+                        </form>
+                    @else
+                        <span class="text-success fw-bold">✓ Toàn bộ phân hệ đã được phê duyệt thành công</span>
+                    @endif
+                </div>
             </div>
         </div>
     @endforeach
