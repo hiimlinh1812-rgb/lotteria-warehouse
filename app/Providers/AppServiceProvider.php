@@ -20,9 +20,19 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Gate cho Cửa hàng trưởng
         Gate::define('isCuaHangTruong', function ($user) {
-        // Chỉ trả về true nếu vai trò đúng từng chữ một
-        return $user->VaiTro === 'Cửa hàng trưởng';
-    });
+            return $user->VaiTro === 'Cửa hàng trưởng';
+        });
+
+        // Bổ sung Gate cho Quản lý
+        Gate::define('isQuanLy', function ($user) {
+            return $user->VaiTro === 'Quản lý';
+        });
+
+        // Bổ sung Gate cho Nhân viên
+        Gate::define('isNhanVien', function ($user) {
+            return $user->VaiTro === 'Nhân viên';
+        });
     }
 }
