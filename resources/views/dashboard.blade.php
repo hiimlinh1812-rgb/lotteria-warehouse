@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
+@can('isCuaHangTruong')
 <div class="row">
     <div class="col-12 mb-4">
         <h2 class="text-danger fw-bold border-bottom pb-2">DASHBOARD TỔNG QUAN KHO</h2>
@@ -34,4 +35,11 @@
         </div>
     </div>
 </div>
+@else
+{{-- Nội dung cho Quản lý hoặc Nhân viên khi họ vào trang Dashboard --}}
+<div class="alert alert-info text-center mt-5">
+    <h4>Chào mừng bạn đến với hệ thống quản lý Lotteria!</h4>
+    <p>Vui lòng chọn chức năng trong thanh menu phía trên để bắt đầu công việc.</p>
+</div>
+@endcan
 @endsection

@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Đăng ký alias 'role' cho Middleware vừa tạo
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckVaiTro::class,
+            'check.vai.tro.nhap.kho' => \App\Http\Middleware\CheckVaiTroNhapKho::class, // ← thêm dòng này
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
