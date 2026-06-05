@@ -20,11 +20,10 @@
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
     <div>
         <h2 class="text-lotteria fw-bold mb-1">Kiểm kê</h2>
-        <p class="text-muted mb-0">Màn tổng quan kiểm kê dành cho quản lý, gom lại các luồng kiểm kê bếp, kiểm kho chính và số liệu chờ duyệt.</p>
     </div>
     <div class="d-flex flex-wrap gap-2">
         <a href="{{ route('quanly.kiemke.bep') }}" class="btn btn-outline-secondary">Duyệt kiểm kê bếp</a>
-        <a href="{{ route('quanly.khochinh.duyet') }}" class="btn btn-outline-secondary">Duyệt kiểm kho chính</a>
+        <a href="{{ route('quanly.khochinh.duyet') }}" class="btn btn-outline-secondary">Duyệt kiểm kê định kỳ</a>
         <a href="{{ route('cht.khochinh.thongke') }}" class="btn btn-outline-secondary">Thống kê tồn kho</a>
     </div>
 </div>
@@ -78,7 +77,6 @@
             <div class="card page-card h-100">
                 <div class="card-body">
                     <h5 class="fw-bold text-lotteria">Kiểm kê bếp</h5>
-                    <p class="text-muted mb-0">Duyệt đối soát cuối ngày, theo dõi hàng hủy sinh ra từ vận hành bếp.</p>
                 </div>
             </div>
         </a>
@@ -87,8 +85,7 @@
         <a href="{{ route('quanly.khochinh.duyet') }}" class="text-decoration-none">
             <div class="card page-card h-100">
                 <div class="card-body">
-                    <h5 class="fw-bold text-lotteria">Kiểm kho chính</h5>
-                    <p class="text-muted mb-0">Duyệt phiếu kiểm kê định kỳ, hiệu chỉnh chênh lệch và xử lý giải trình.</p>
+                    <h5 class="fw-bold text-lotteria">Kiểm kê định kỳ</h5>
                 </div>
             </div>
         </a>
@@ -98,7 +95,6 @@
             <div class="card page-card h-100">
                 <div class="card-body">
                     <h5 class="fw-bold text-lotteria">Thống kê tồn kho</h5>
-                    <p class="text-muted mb-0">Xem lịch sử các phiếu định kỳ đã duyệt và số liệu sau đối soát.</p>
                 </div>
             </div>
         </a>
@@ -108,7 +104,6 @@
 <div class="card page-card">
     <div class="card-header bg-white border-0 pb-0">
         <h5 class="fw-bold mb-1">Phiếu kiểm kê gần đây</h5>
-        <p class="text-muted small mb-0">Giữ nguyên route `kiem-ke.index` nhưng thay bằng trang tổng hợp có dữ liệu gần nhất.</p>
     </div>
     <div class="card-body">
         <div class="table-responsive">

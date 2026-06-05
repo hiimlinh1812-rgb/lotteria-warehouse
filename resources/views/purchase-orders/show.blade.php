@@ -5,6 +5,7 @@
 @php
     $isManagerUser = auth()->check() && in_array(auth()->user()->VaiTro ?? null, ['Quan ly', 'Quản lý'], true);
     $isStoreChiefUser = auth()->check() && in_array(auth()->user()->VaiTro ?? null, ['Cua hang truong', 'Cửa hàng trưởng'], true);
+    $currentUser = auth()->user();
     $managerMode = request()->routeIs('don-hang.*') && $isManagerUser;
     $routePrefix = $managerMode ? 'don-hang' : 'purchase-orders';
     $statusClass = match ($order->TrangThai) {
@@ -45,18 +46,6 @@
         @endif
     </div>
 </div>
-
-@if ($managerMode)
-    <div class="alert alert-light border start border-4 border-danger-subtle shadow-sm mb-4" role="alert">
-        <div class="fw-bold text-lotteria mb-1">Quyền của Quản lý trên đơn này</div>
-        <div class="small text-muted">Bạn chỉ được sửa hoặc hủy khi đơn còn chờ phê duyệt. Sau khi cửa hàng trưởng duyệt xong, bạn tiếp tục nhận hàng, kiểm tra đối soát, đổi trả và nhập kho.</div>
-    </div>
-@elseif ($isStoreChiefUser)
-    <div class="alert alert-light border start border-4 border-warning shadow-sm mb-4" role="alert">
-        <div class="fw-bold text-lotteria mb-1">Quyền của Cửa hàng trưởng trên đơn này</div>
-        <div class="small text-muted">Bạn chỉ được phê duyệt hoặc từ chối đơn đang chờ phê duyệt. Bạn không được tạo đơn, sửa đơn, hủy đơn hay nhập kho.</div>
-    </div>
-@endif
 
 <div class="row g-4 mb-4">
     <div class="col-lg-8">
@@ -275,12 +264,8 @@
                             <p class="small text-muted">Xác nhận đơn hợp lệ để chuyển sang bước nhận hàng.</p>
                             <div class="mb-3">
                                 <label for="approve-account" class="form-label fw-semibold">Cửa hàng trưởng</label>
-                                <select id="approve-account" name="MaTaiKhoan" class="form-select" required>
-                                    <option value="">Chọn tài khoản</option>
-                                    @foreach ($approvalAccounts as $account)
-                                        <option value="{{ $account->MaTaiKhoan }}">{{ $account->MaTaiKhoan }} - {{ $account->HoTen }} ({{ $account->VaiTro }})</option>
-                                    @endforeach
-                                </select>
+                                <input id="approve-account" class="form-control" value="{{ ($currentUser->MaTaiKhoan ?? '') . ' - ' . ($currentUser->HoTen ?? '') }}" readonly>
+                                <input type="hidden" name="MaTaiKhoan" value="{{ $currentUser->MaTaiKhoan ?? '' }}">
                             </div>
                             <div class="mb-3">
                                 <label for="GhiChuDuyet" class="form-label fw-semibold">Ghi chú phê duyệt</label>
@@ -296,12 +281,8 @@
                             <p class="small text-muted">Ghi rõ lý do để quản lý chỉnh sửa hoặc tạo lại đơn cho đúng nhu cầu.</p>
                             <div class="mb-3">
                                 <label for="reject-account" class="form-label fw-semibold">Cửa hàng trưởng</label>
-                                <select id="reject-account" name="MaTaiKhoan" class="form-select" required>
-                                    <option value="">Chọn tài khoản</option>
-                                    @foreach ($approvalAccounts as $account)
-                                        <option value="{{ $account->MaTaiKhoan }}">{{ $account->MaTaiKhoan }} - {{ $account->HoTen }} ({{ $account->VaiTro }})</option>
-                                    @endforeach
-                                </select>
+                                <input id="reject-account" class="form-control" value="{{ ($currentUser->MaTaiKhoan ?? '') . ' - ' . ($currentUser->HoTen ?? '') }}" readonly>
+                                <input type="hidden" name="MaTaiKhoan" value="{{ $currentUser->MaTaiKhoan ?? '' }}">
                             </div>
                             <div class="mb-3">
                                 <label for="LyDoTuChoi" class="form-label fw-semibold">Lý do từ chối</label>

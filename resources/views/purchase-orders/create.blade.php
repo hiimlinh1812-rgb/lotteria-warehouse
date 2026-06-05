@@ -14,7 +14,6 @@
 <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
     <div>
         <h2 class="text-lotteria fw-bold mb-1">Tạo đơn đặt hàng</h2>
-        <p class="text-muted mb-0">Mã dự kiến: <strong>{{ $nextCode }}</strong>. Sau khi hoàn tất, đơn sẽ chuyển sang trạng thái <strong>Chờ phê duyệt</strong>.</p>
     </div>
     <a class="btn btn-outline-secondary" href="{{ route($routePrefix . '.index') }}">Quay lại trang Đơn hàng</a>
 </div>

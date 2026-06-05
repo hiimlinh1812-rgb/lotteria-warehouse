@@ -54,6 +54,7 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'can:isManagementUser'])->group(function () {
     Route::get('/dashboard/thong-ke-ton-kho', [KiemKeKhoChinhController::class, 'thongKeTonKho'])->name('cht.khochinh.thongke');
     Route::get('/giai-trinh', [GiaiTrinhController::class, 'index'])->name('giai-trinh.index');
+    Route::get('/xuat-huy', [XuatHuyController::class, 'index'])->name('xuat-huy.index');
 });
 
 Route::middleware(['auth', 'can:isCuaHangTruong'])->group(function () {
@@ -61,12 +62,17 @@ Route::middleware(['auth', 'can:isCuaHangTruong'])->group(function () {
     Route::resource('tai-khoan', TaiKhoanController::class);
 });
 
+require __DIR__.'/nhap_kho.php';
+// 4. Route cho Quản lý
 Route::middleware(['auth', 'can:isQuanLy'])->group(function () {
     Route::prefix('don-hang')->name('don-hang.')->group(function () {
         Route::get('/', [PurchaseOrderController::class, 'index'])->name('index');
         Route::get('/tao-don', [PurchaseOrderController::class, 'create'])->name('create');
         Route::post('/', [PurchaseOrderController::class, 'store'])->name('store');
         Route::get('/{order}', [PurchaseOrderController::class, 'show'])->name('show');
+        Route::get('/{order}/sua', [PurchaseOrderController::class, 'edit'])->name('edit');
+        Route::put('/{order}', [PurchaseOrderController::class, 'update'])->name('update');
+        Route::post('/{order}/huy', [PurchaseOrderController::class, 'cancel'])->name('cancel');
         Route::get('/{order}/doi-tra', [PurchaseOrderController::class, 'returnForm'])->name('return.create');
         Route::post('/{order}/doi-tra', [PurchaseOrderController::class, 'storeReturn'])->name('return.store');
         Route::get('/{order}/nhap-kho', [PurchaseOrderController::class, 'stockForm'])->name('stock.create');
@@ -80,7 +86,6 @@ Route::middleware(['auth', 'can:isQuanLy'])->group(function () {
         Route::get('/chi-tiet-phieu/{id}', [XuatKhoController::class, 'quanLyShow'])->name('quanly.chitiet');
     });
 
-    Route::get('/xuat-huy', [XuatHuyController::class, 'index'])->name('xuat-huy.index');
     Route::get('/kiem-ke', [KiemKeController::class, 'index'])->name('kiem-ke.index');
 
     Route::get('/quan-ly/kiem-ke-bep', [KiemKeBepController::class, 'danhSachBaoCao'])->name('quanly.kiemke.bep');
@@ -103,6 +108,8 @@ Route::middleware(['auth', 'can:isNhanVien'])->group(function () {
     });
 
     Route::get('/ds-don-hang', [DonHangNVController::class, 'index'])->name('ds-don-hang.index');
+    Route::get('/ds-don-hang/{order}', [DonHangNVController::class, 'show'])->name('ds-don-hang.show');
+    Route::post('/ds-don-hang/{order}', [DonHangNVController::class, 'store'])->name('ds-don-hang.store');
     Route::get('/kiem-ke-ngay', [KiemKeNgayController::class, 'index'])->name('kiem-ke-ngay.index');
     Route::get('/kiem-ke-dinh-ky', [KiemKeDinhKyController::class, 'index'])->name('kiem-ke-dinh-ky.index');
 

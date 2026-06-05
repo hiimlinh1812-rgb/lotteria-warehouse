@@ -6,7 +6,7 @@
         <div class="col-md-9">
             <div class="card shadow border-0">
                 <div class="card-header bg-danger text-white text-center py-3">
-                    <h4 class="mb-0 fw-bold">📋 LẬP PHIẾU GIẢI TRÌNH THẤT THOÁT KHO CHÍNH</h4>
+                    <h4 class="mb-0 fw-bold">📋 LẬP PHIẾU GIẢI TRÌNH THẤT THOÁT</h4>
                     <small class="text-white-50">Mã Phiếu Kiểm Kê Liên Kết: {{ $maPhieu }}</small>
                 </div>
                 <div class="card-body p-4">

@@ -1,0 +1,370 @@
+/* =====================================================
+   LOTTERIA - Module Nhập Kho
+   Palette: Đỏ Lotteria #E31837, trắng, xám nhạt
+   ===================================================== */
+
+:root {
+    --lotteria-red:    #E31837;
+    --lotteria-dark:   #B01229;
+    --lotteria-light:  #fde8ec;
+    --text-dark:       #1a1a2e;
+    --text-muted:      #6b7280;
+    --border:          #e5e7eb;
+    --bg-page:         #f9fafb;
+    --white:           #ffffff;
+    --success:         #16a34a;
+    --success-bg:      #dcfce7;
+    --warning:         #d97706;
+    --warning-bg:      #fef3c7;
+    --danger:          #dc2626;
+    --danger-bg:       #fee2e2;
+    --info:            #0284c7;
+    --info-bg:         #e0f2fe;
+    --radius:          10px;
+    --shadow:          0 2px 12px rgba(0,0,0,.08);
+    --shadow-lg:       0 8px 32px rgba(0,0,0,.12);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg-page);
+    color: var(--text-dark);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* ── Page Header ─────────────────────────────── */
+.page-header {
+    background: linear-gradient(135deg, var(--lotteria-red) 0%, var(--lotteria-dark) 100%);
+    color: var(--white);
+    padding: 24px 32px;
+    border-radius: var(--radius);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: var(--shadow-lg);
+}
+
+.page-header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.3px;
+}
+
+.page-header .subtitle {
+    font-size: 13px;
+    opacity: .85;
+    margin-top: 2px;
+}
+
+/* ── Card ─────────────────────────────────────── */
+.card {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fafafa;
+}
+
+.card-header h2, .card-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--lotteria-red);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.card-body { padding: 24px; }
+
+/* ── Table ─────────────────────────────────────── */
+.table-wrap { overflow-x: auto; }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+}
+
+thead th {
+    background: #f1f5f9;
+    color: var(--text-dark);
+    font-weight: 600;
+    padding: 12px 14px;
+    text-align: left;
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+}
+
+tbody td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+}
+
+tbody tr:hover { background: #fef9f9; }
+tbody tr:last-child td { border-bottom: none; }
+
+/* ── Badge / Status ───────────────────────────── */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.badge-success  { background: var(--success-bg);  color: var(--success); }
+.badge-warning  { background: var(--warning-bg);  color: var(--warning); }
+.badge-danger   { background: var(--danger-bg);   color: var(--danger);  }
+.badge-info     { background: var(--info-bg);     color: var(--info);    }
+.badge-gray     { background: #f3f4f6;            color: #4b5563;        }
+.badge-red      { background: var(--lotteria-light); color: var(--lotteria-red); }
+
+/* ── Buttons ─────────────────────────────────── */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all .18s;
+    white-space: nowrap;
+}
+
+.btn-primary   { background: var(--lotteria-red);  color: var(--white); }
+.btn-primary:hover  { background: var(--lotteria-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(227,24,55,.35); }
+
+.btn-success   { background: var(--success);       color: var(--white); }
+.btn-success:hover  { background: #15803d; transform: translateY(-1px); }
+
+.btn-warning   { background: var(--warning);       color: var(--white); }
+.btn-warning:hover  { background: #b45309; transform: translateY(-1px); }
+
+.btn-outline   { background: transparent; border: 2px solid var(--lotteria-red); color: var(--lotteria-red); }
+.btn-outline:hover  { background: var(--lotteria-light); }
+
+.btn-secondary { background: #e5e7eb; color: #374151; }
+.btn-secondary:hover { background: #d1d5db; }
+
+.btn-sm { padding: 5px 12px; font-size: 12.5px; }
+.btn-lg { padding: 11px 26px; font-size: 15px; }
+
+/* ── Form ─────────────────────────────────────── */
+.form-group { margin-bottom: 18px; }
+
+.form-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text-dark);
+    font-size: 13.5px;
+}
+
+.form-label .required { color: var(--lotteria-red); margin-left: 2px; }
+
+.form-control {
+    width: 100%;
+    padding: 9px 13px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 13.5px;
+    transition: border-color .15s, box-shadow .15s;
+    background: var(--white);
+    color: var(--text-dark);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--lotteria-red);
+    box-shadow: 0 0 0 3px rgba(227,24,55,.12);
+}
+
+.form-control.is-invalid { border-color: var(--danger); }
+.invalid-feedback { color: var(--danger); font-size: 12.5px; margin-top: 4px; }
+
+.form-text { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+select.form-control { cursor: pointer; }
+
+/* Input số lượng nổi bật */
+.qty-input {
+    text-align: center;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--lotteria-red);
+    width: 100px;
+}
+
+/* ── Alert / Flash ────────────────────────────── */
+.alert {
+    padding: 12px 18px;
+    border-radius: 8px;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13.5px;
+    font-weight: 500;
+}
+
+.alert-success { background: var(--success-bg); color: var(--success); border-left: 4px solid var(--success); }
+.alert-warning { background: var(--warning-bg); color: var(--warning); border-left: 4px solid var(--warning); }
+.alert-danger  { background: var(--danger-bg);  color: var(--danger);  border-left: 4px solid var(--danger);  }
+.alert-info    { background: var(--info-bg);     color: var(--info);    border-left: 4px solid var(--info);    }
+
+/* ── Info Grid (detail rows) ──────────────────── */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 8px;
+}
+
+.info-item label {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    display: block;
+    margin-bottom: 3px;
+}
+
+.info-item span {
+    font-size: 14px;
+    color: var(--text-dark);
+    font-weight: 500;
+}
+
+/* ── Sai lệch highlight ───────────────────────── */
+.row-mismatch { background: #fff7f7 !important; }
+.row-mismatch td { border-left: 3px solid var(--lotteria-red); }
+
+.text-danger { color: var(--danger); font-weight: 700; }
+.text-success { color: var(--success); font-weight: 700; }
+.text-warning { color: var(--warning); font-weight: 700; }
+.text-muted { color: var(--text-muted); }
+
+/* ── Filter Bar ───────────────────────────────── */
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: flex-end;
+    background: var(--white);
+    padding: 16px 20px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+}
+
+.filter-bar .form-group { margin-bottom: 0; }
+.filter-bar .form-control { min-width: 180px; }
+
+/* ── Pagination ───────────────────────────────── */
+.pagination-wrap {
+    display: flex;
+    justify-content: flex-end;
+    padding: 16px 24px 0;
+}
+
+.pagination-wrap .pagination { gap: 4px; }
+.pagination-wrap .page-link {
+    border-radius: 6px;
+    border-color: var(--border);
+    color: var(--lotteria-red);
+    font-size: 13px;
+    padding: 6px 12px;
+}
+
+.pagination-wrap .page-item.active .page-link {
+    background: var(--lotteria-red);
+    border-color: var(--lotteria-red);
+    color: var(--white);
+}
+
+/* ── Step Indicator ───────────────────────────── */
+.steps {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 28px;
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    position: relative;
+}
+
+.step::after {
+    content: '';
+    position: absolute;
+    top: 18px;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background: var(--border);
+    z-index: 0;
+}
+
+.step:last-child::after { display: none; }
+
+.step-circle {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--border);
+    color: var(--text-muted);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 14px;
+    z-index: 1;
+    position: relative;
+}
+
+.step.active .step-circle   { background: var(--lotteria-red);  color: var(--white); }
+.step.done .step-circle     { background: var(--success);        color: var(--white); }
+.step-label { font-size: 11.5px; color: var(--text-muted); margin-top: 6px; text-align: center; }
+.step.active .step-label { color: var(--lotteria-red); font-weight: 600; }
+.step.done .step-label   { color: var(--success); }
+
+/* ── Responsive ───────────────────────────────── */
+@media (max-width: 768px) {
+    .page-header { flex-direction: column; gap: 12px; align-items: flex-start; }
+    .info-grid   { grid-template-columns: 1fr 1fr; }
+    .filter-bar  { flex-direction: column; }
+    .filter-bar .form-control { width: 100%; }
+    .steps { display: none; }
+}
+
+/* ── Print ────────────────────────────────────── */
+@media print {
+    body { background: white; }
+    .btn, .filter-bar, .no-print { display: none !important; }
+    .card { box-shadow: none; border: 1px solid #ddd; }
+    .page-header { background: var(--lotteria-red) !important; -webkit-print-color-adjust: exact; }
+}

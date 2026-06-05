@@ -3,27 +3,38 @@
 @section('title', 'Sửa đơn mua ' . $order->MaDonDatHang)
 
 @php
-    $editableItems = old('items', ! empty($items) ? $items->map(function ($item) {
+    $routePrefix = request()->routeIs('don-hang.*') ? 'don-hang' : 'purchase-orders';
+    $editableItems = old('items', collect($items ?? [])->map(function ($item) {
+        if (is_array($item)) {
+            return [
+                'MaNguyenLieu' => $item['MaNguyenLieu'] ?? '',
+                'SoLuongDat' => $item['SoLuongDat'] ?? 1,
+            ];
+        }
+
         return [
-            'MaNguyenLieu' => $item->MaNguyenLieu,
-            'SoLuongDat' => $item->SoLuongDat,
+            'MaNguyenLieu' => $item->MaNguyenLieu ?? '',
+            'SoLuongDat' => $item->SoLuongDat ?? 1,
         ];
-    })->all() : [['MaNguyenLieu' => '', 'SoLuongDat' => 1]]);
+    })->all());
+
+    if (empty($editableItems)) {
+        $editableItems = [['MaNguyenLieu' => '', 'SoLuongDat' => 1]];
+    }
 @endphp
 
 @section('content')
 <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
     <div>
         <h2 class="text-lotteria fw-bold mb-1">Sửa đơn mua {{ $order->MaDonDatHang }}</h2>
-        <p class="text-muted mb-0">Chỉ đơn ở trạng thái <strong>Chờ phê duyệt</strong> hoặc <strong>Đang xử lý</strong> mới được cập nhật.</p>
     </div>
     <div class="d-flex gap-2">
-        <a class="btn btn-outline-secondary" href="{{ route('purchase-orders.show', $order->MaDonDatHang) }}">Chi tiết</a>
-        <a class="btn btn-outline-secondary" href="{{ route('purchase-orders.index') }}">Danh sách</a>
+        <a class="btn btn-outline-secondary" href="{{ route($routePrefix . '.show', $order->MaDonDatHang) }}">Chi tiết</a>
+        <a class="btn btn-outline-secondary" href="{{ route($routePrefix . '.index') }}">Danh sách</a>
     </div>
 </div>
 
-<form method="post" action="{{ route('purchase-orders.update', $order->MaDonDatHang) }}">
+<form method="post" action="{{ route($routePrefix . '.update', $order->MaDonDatHang) }}">
     @csrf
     @method('put')
 
@@ -93,7 +104,7 @@
 
             <div class="d-flex flex-wrap gap-2 mt-4">
                 <button class="btn btn-lotteria fw-bold" type="submit">Lưu thay đổi</button>
-                <a class="btn btn-outline-secondary" href="{{ route('purchase-orders.show', $order->MaDonDatHang) }}">Quay lại</a>
+                <a class="btn btn-outline-secondary" href="{{ route($routePrefix . '.show', $order->MaDonDatHang) }}">Quay lại</a>
             </div>
         </div>
     </div>

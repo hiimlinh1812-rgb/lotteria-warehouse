@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
 
 class KiemKeDinhKyController extends Controller
 {
-    public function index() 
+    public function index(): RedirectResponse
     {
-        return view('kiem_ke_bep');
+        return redirect()->route('khochinh.kiemke');
     }
 }

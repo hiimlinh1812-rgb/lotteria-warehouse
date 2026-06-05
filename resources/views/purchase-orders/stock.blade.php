@@ -6,7 +6,6 @@
 <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
     <div>
         <h2 class="text-lotteria fw-bold mb-1">Form Nhập kho cho đơn {{ $order->MaDonDatHang }}</h2>
-        <p class="text-muted mb-0">Hoàn tất bước nhập kho cho đơn đã nhận hàng và tạo phiếu nhập kho tương ứng.</p>
     </div>
     <a class="btn btn-outline-secondary" href="{{ route('don-hang.show', $order->MaDonDatHang) }}">Quay lại đối soát</a>
 </div>

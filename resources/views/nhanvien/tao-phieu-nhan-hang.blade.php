@@ -1,0 +1,88 @@
+@extends('layouts.app')
+
+@section('title', 'Tạo phiếu nhận hàng - ' . $orderData->MaDonDatHang)
+
+@section('content')
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+    <div>
+        <h2 class="text-lotteria fw-bold mb-1">Tạo phiếu nhận hàng - {{ $orderData->MaDonDatHang }}</h2>
+        <p class="text-muted mb-0">Ngày đặt: {{ \Illuminate\Support\Carbon::parse($orderData->NgayDat)->format('d/m/Y') }} - Người tạo: {{ $orderData->HoTen }}</p>
+    </div>
+    <a class="btn btn-outline-secondary" href="{{ route('ds-don-hang.index') }}">Quay lại</a>
+</div>
+
+<form method="post" action="{{ route('ds-don-hang.store', $orderData->MaDonDatHang) }}">
+    @csrf
+
+    <div class="row">
+        <div class="col-lg-12 mb-4">
+            <div class="card page-card">
+                <div class="card-header bg-white border-0 pt-4 px-4">
+                    <h5 class="mb-1 fw-bold">Thông tin phiếu nhận hàng</h5>
+                </div>
+                <div class="card-body px-4 pb-4">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label for="NgayNhan" class="form-label fw-semibold">Ngày nhận</label>
+                            <input id="NgayNhan" name="NgayNhan" type="date" class="form-control" value="{{ now()->toDateString() }}" required>
+                        </div>
+                        <div class="col-md-8">
+                            <label for="GhiChu" class="form-label fw-semibold">Ghi chú</label>
+                            <input id="GhiChu" name="GhiChu" maxlength="255" class="form-control" placeholder="Nhập ghi chú nếu có...">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-12">
+            <div class="card page-card">
+                <div class="card-header bg-white border-0 pt-4 px-4">
+                    <h5 class="mb-1 fw-bold">Chi tiết nguyên liệu nhận hàng</h5>
+                </div>
+                <div class="card-body px-4 pb-4">
+                    <div class="table-responsive">
+                        <table class="table table-striped align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="col-2">Mã nguyên liệu</th>
+                                    <th class="col-3">Tên nguyên liệu</th>
+                                    <th class="col-1">Số lượng đặt</th>
+                                    <th class="col-1">Đơn vị</th>
+                                    <th class="col-2">Số lượng thực nhận</th>
+                                    <th class="col-2">Ngày sản xuất</th>
+                                    <th class="col-2">Hạn sử dụng</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($items as $index => $item)
+                                <tr>
+                                    <td class="fw-bold">{{ $item->MaNguyenLieu }}</td>
+                                    <td>{{ $item->TenNguyenLieu }}</td>
+                                    <td>{{ $item->SoLuongDat }}</td>
+                                    <td>{{ $item->DonViTinh }}</td>
+                                    <td>
+                                        <input type="hidden" name="items[{{ $index }}][MaNguyenLieu]" value="{{ $item->MaNguyenLieu }}">
+                                        <input type="number" min="0" name="items[{{ $index }}][SoLuongThucNhan]" class="form-control" value="{{ $item->SoLuongDat }}" required>
+                                    </td>
+                                    <td>
+                                        <input type="date" name="items[{{ $index }}][NgaySanXuat]" class="form-control" value="{{ now()->subDays(30)->toDateString() }}" required>
+                                    </td>
+                                    <td>
+                                        <input type="date" name="items[{{ $index }}][HanSuDung]" class="form-control" value="{{ now()->addDays(90)->toDateString() }}" required>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 mt-4">
+                        <button class="btn btn-lotteria fw-bold" type="submit">Xác nhận tạo phiếu nhận hàng</button>
+                        <a class="btn btn-outline-secondary" href="{{ route('ds-don-hang.index') }}">Hủy</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+@endsection

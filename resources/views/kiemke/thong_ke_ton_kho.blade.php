@@ -3,7 +3,7 @@
 @section('content')
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
-        <h2 class="fw-bold text-dark">📊 BÁO CÁO THỐNG KÊ TỒN KHO SAU KIỂM KÊ (KHO CHÍNH)</h2>
+        <h2 class="fw-bold text-dark">📊 BÁO CÁO THỐNG KÊ TỒN KHO SAU KIỂM KÊ</h2>
         <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary btn-sm fw-bold shadow-sm">Quay lại Dashboard</a>
     </div>
 
@@ -58,7 +58,7 @@
     @empty
         <div class="card shadow border-0 p-5 text-center my-4 bg-white">
             <div class="text-center mb-3"><span class="fs-1">📊</span></div>
-            <h5 class="fw-bold text-secondary">Hệ thống chưa ghi nhận bất kỳ phiếu kiểm kê định kỳ kho chính nào ở trạng thái "Đã duyệt"!</h5>
+            <h5 class="fw-bold text-secondary">Hệ thống chưa ghi nhận bất kỳ phiếu kiểm kê định kỳ nào ở trạng thái "Đã duyệt"!</h5>
             <p class="text-muted small mb-0">Số liệu thống kê sẽ tự động cập nhật hiển thị tại đây sau khi có phiếu đối soát được duyệt chốt.</p>
         </div>
     @endforelse

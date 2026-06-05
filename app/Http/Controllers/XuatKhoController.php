@@ -76,6 +76,7 @@ class XuatKhoController extends Controller
                 if ($soLuongYeuCau <= 0) continue;
 
                 $soLuongCanPhanBo = $soLuongYeuCau;
+                $tenNguyenLieu = NguyenLieu::where('MaNguyenLieu', $maNguyenLieu)->value('TenNguyenLieu') ?? $maNguyenLieu;
 
                 // THUẬT TOÁN FIFO
                 $cacLoHang = LoHang::where('MaNguyenLieu', $maNguyenLieu)
@@ -83,6 +84,13 @@ class XuatKhoController extends Controller
                     ->where('TrangThai', '!=', 'Hết hạn')
                     ->orderBy('HanSuDung', 'asc')
                     ->get();
+
+                if ($cacLoHang->isEmpty()) {
+                    DB::rollBack();
+                    return redirect()->back()->withErrors([
+                        'error' => 'Nguyên liệu ' . $tenNguyenLieu . ' hiện chưa có lô hàng khả dụng để xuất kho.'
+                    ]);
+                }
 
                 foreach ($cacLoHang as $loHang) {
                     if ($soLuongCanPhanBo <= 0) break;
@@ -107,7 +115,7 @@ class XuatKhoController extends Controller
                 if ($soLuongCanPhanBo > 0) {
                     DB::rollBack();
                     return redirect()->back()->withErrors([
-                        'error' => 'Số lượng tồn kho trong các lô không đủ để đáp ứng yêu cầu cho nguyên liệu: ' . $maNguyenLieu
+                        'error' => 'Số lượng tồn trong các lô của nguyên liệu ' . $tenNguyenLieu . ' không đủ để đáp ứng yêu cầu xuất kho.'
                     ]);
                 }
             }
@@ -116,7 +124,9 @@ class XuatKhoController extends Controller
             return redirect()->route('xuatkho.index')->with('success', 'Khởi tạo thành công phiếu xuất kho ' . $maPhieuXuat . ' với trạng thái Chờ xuất hàng.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->withErrors(['error' => 'Thao tác thất bại, hệ thống đã rollback dữ liệu. Chi tiết: ' . $e->getMessage()]);
+            return redirect()->back()->withErrors([
+                'error' => 'Không thể tạo phiếu xuất kho. Hệ thống đã hoàn tác dữ liệu. Chi tiết lỗi: ' . $e->getMessage()
+            ]);
         }
     }
 
@@ -190,7 +200,7 @@ class XuatKhoController extends Controller
                 if ($loHang->SoLuongConLai < $soLuongThucTe) {
                     DB::rollBack();
                     return redirect()->back()->withErrors([
-                        'error' => 'Lỗi kiểm đếm: Số lượng thực lấy tại kệ vượt quá tồn kho thực tế hiện tại của lô ' . $maLoHang
+                        'error' => 'Số lượng thực lấy vượt quá tồn kho hiện có của lô ' . $maLoHang . '. Vui lòng kiểm tra lại số lượng nhập.'
                     ]);
                 }
 
@@ -226,7 +236,9 @@ class XuatKhoController extends Controller
             return redirect()->route('nhanvien.phieuxuat')->with('success', 'Xác nhận hoàn thành xuất hàng thành công. Hệ thống đã tự động cập nhật số liệu kho thực tế.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->withErrors(['error' => 'Xử lý hoàn tất xuất kho thất bại. Chi tiết lỗi: ' . $e->getMessage()]);
+            return redirect()->back()->withErrors([
+                'error' => 'Không thể xác nhận hoàn tất xuất kho. Chi tiết lỗi: ' . $e->getMessage()
+            ]);
         }
     }
     public function quanLyShow(string $id)

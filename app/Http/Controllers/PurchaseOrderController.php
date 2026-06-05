@@ -462,7 +462,7 @@ class PurchaseOrderController extends Controller
             ->where('MaDonDatHang', $order)
             ->whereIn('TrangThai', $this->statusCandidates([self::STATUS_PENDING]))
             ->update([
-                'TrangThai' => self::STATUS_APPROVED,
+                'TrangThai' => 'Chờ nhận hàng',
                 'GhiChu' => $this->appendApprovalNote($order, 'Phê duyệt', $request->MaTaiKhoan, $request->GhiChuDuyet),
             ]);
 
@@ -471,7 +471,7 @@ class PurchaseOrderController extends Controller
                 $order,
                 'Phê duyệt đơn',
                 $previousStatus,
-                self::STATUS_APPROVED,
+                'Chờ nhận hàng',
                 $request->MaTaiKhoan,
                 $request->GhiChuDuyet
             );
@@ -479,7 +479,7 @@ class PurchaseOrderController extends Controller
 
         return back()->with(
             $updated ? 'success' : 'warning',
-            $updated ? 'Đơn mua đã được phê duyệt.' : 'Chỉ phê duyệt được đơn đang chờ phê duyệt.'
+            $updated ? 'Đơn mua đã được phê duyệt và chuyển trạng thái thành Chờ nhận hàng.' : 'Chỉ phê duyệt được đơn đang chờ phê duyệt.'
         );
     }
 

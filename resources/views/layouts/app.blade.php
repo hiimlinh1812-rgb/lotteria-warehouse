@@ -86,6 +86,7 @@
             $menuItems = [
                 ['label' => 'Tổng quan', 'route' => route('dashboard'), 'active' => request()->routeIs('dashboard')],
                 ['label' => 'Đơn hàng', 'route' => route('purchase-orders.index'), 'active' => request()->routeIs('purchase-orders.*')],
+                ['label' => 'Phiếu xuất hủy', 'route' => route('xuat-huy.index'), 'active' => request()->routeIs('xuat-huy.*')],
                 ['label' => 'Nguyên liệu gốc', 'route' => route('nguyen-lieu.index'), 'active' => request()->routeIs('nguyen-lieu.*')],
                 ['label' => 'Tài khoản', 'route' => route('tai-khoan.index'), 'active' => request()->routeIs('tai-khoan.*')],
             ];
@@ -96,16 +97,15 @@
                 ['label' => 'Xuất kho', 'route' => route('xuatkho.index'), 'active' => request()->routeIs('xuatkho.*')],
                 ['label' => 'Xuất hủy', 'route' => route('xuat-huy.index'), 'active' => request()->routeIs('xuat-huy.*')],
                 ['label' => 'Kiểm kê', 'route' => route('kiem-ke.index'), 'active' => request()->routeIs('kiem-ke.*')],
-                ['label' => 'Giải trình', 'route' => route('giai-trinh.index'), 'active' => request()->routeIs('giai-trinh.*')],
                 ['label' => 'Duyệt kiểm kê bếp', 'route' => route('quanly.kiemke.bep'), 'active' => request()->routeIs('quanly.kiemke.*')],
-                ['label' => 'Duyệt kiểm kho chính', 'route' => route('quanly.khochinh.duyet'), 'active' => request()->routeIs('quanly.khochinh.*')],
+                ['label' => 'Duyệt kiểm kê định kỳ', 'route' => route('quanly.khochinh.duyet'), 'active' => request()->routeIs('quanly.khochinh.*')],
             ];
         } elseif ($isEmployee) {
             $menuItems = [
                 ['label' => 'Phiếu xuất kho', 'route' => route('nhanvien.phieuxuat'), 'active' => request()->routeIs('nhanvien.*')],
                 ['label' => 'Danh sách đơn hàng', 'route' => route('ds-don-hang.index'), 'active' => request()->routeIs('ds-don-hang.*')],
-                ['label' => 'Kiểm kê cuối ngày', 'route' => route('kiemke.bep'), 'active' => request()->routeIs('kiemke.bep')],
-                ['label' => 'Kiểm kê định kỳ', 'route' => route('khochinh.kiemke'), 'active' => request()->routeIs('khochinh.kiemke')],
+                ['label' => 'Kiểm kê cuối ngày', 'route' => route('kiemke.bep'), 'active' => request()->routeIs('kiemke.bep', 'kiem-ke-ngay.index')],
+                ['label' => 'Kiểm kê định kỳ', 'route' => route('khochinh.kiemke'), 'active' => request()->routeIs('khochinh.kiemke', 'kiem-ke-dinh-ky.index')],
             ];
         } elseif (auth()->check()) {
             $menuItems = [

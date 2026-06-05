@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckVaiTro::class,
+            'check.vai.tro.nhap.kho' => \App\Http\Middleware\CheckVaiTroNhapKho::class, // ← thêm dòng này
         ]);
 
         $middleware->validateCsrfTokens(except: [

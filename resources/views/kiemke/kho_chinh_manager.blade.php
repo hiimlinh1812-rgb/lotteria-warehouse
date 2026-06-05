@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<h2 class="mb-4 text-center fw-bold text-dark">🏛️ TRANG DUYỆT KIỂM KÊ ĐỊNH KỲ (QUẢN LÝ)</h2>
+<h2 class="mb-4 text-center fw-bold text-dark">🏛️ DUYỆT KIỂM KÊ ĐỊNH KỲ</h2>
 
 @forelse($danhSachPhiu as $phiu)
     <div class="card shadow mb-5 border-0">
@@ -18,7 +18,7 @@
                         <th>Số Lượng Thực Tế</th>
                         <th>Chênh Lệch Đối Soát</th>
                         <th>Kết Luận Vận Hành</th>
-                        <th>Hành Động Hiệu Chỉnh (HĐ10)</th>
+                        <th>Hành Động Hiệu Chỉnh</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -36,8 +36,8 @@
                             </span>
                         </td>
                         <td>
-                            @if(($detail->isEdited ?? false) || $phiu['TrangThai'] == 'Đã duyệt')
-                                <span class="text-muted small">✓ Đã đồng bộ lô</span>
+                            @if(($detail->isEdited ?? false) || $phiu['TrangThai'] !== 'Chờ duyệt')
+                                <span class="text-muted small">✓ Đã hiệu chỉnh</span>
                             @else
                                 <form action="{{ route('quanly.khochinh.hieuchinh', $phiu['MaPhieuKiemKe']) }}" method="POST" class="d-flex justify-content-center gap-1">
                                     @csrf

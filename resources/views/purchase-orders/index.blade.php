@@ -51,25 +51,13 @@
 <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
     <div>
         <h2 class="text-lotteria fw-bold mb-1">{{ $managerMode ? 'Trang Đơn Hàng' : ($isStoreChiefUser ? 'Phê Duyệt Đơn Mua' : 'Đặt hàng & phê duyệt đơn mua') }}</h2>
-        <p class="text-muted mb-0">
-            {{ $managerMode
-                ? 'Quản lý theo dõi đơn đặt hàng, gửi đơn sang cửa hàng trưởng phê duyệt và xử lý các đơn đã nhận hàng.'
-                : ($isStoreChiefUser
-                    ? 'Cửa hàng trưởng kiểm tra các đơn chờ phê duyệt, xem chi tiết và quyết định duyệt hoặc từ chối.'
-                    : 'Theo dõi đề xuất mua nguyên liệu, cập nhật trạng thái và kiểm soát luồng phê duyệt đơn mua.') }}
-        </p>
     </div>
     @if ($isManagerUser && $managerMode)
         <a href="{{ route($routePrefix . '.create') }}" class="btn btn-lotteria fw-bold">+ Tạo đơn đặt hàng</a>
     @endif
 </div>
 
-@if ($managerMode)
-    <div class="alert alert-light border border-start border-4 border-danger-subtle shadow-sm mb-4" role="alert">
-        <div class="fw-bold text-lotteria mb-1">Quyền của Quản lý</div>
-        <div class="small text-muted">Bạn được tạo đơn, sửa và hủy các đơn đang chờ phê duyệt; khi đơn đã nhận hàng thì được xem đối soát, đổi trả và nhập kho.</div>
-    </div>
-@elseif ($isStoreChiefUser)
+@if ($isStoreChiefUser)
     <div class="alert alert-light border border-start border-4 border-warning shadow-sm mb-4" role="alert">
         <div class="fw-bold text-lotteria mb-1">Quyền của Cửa hàng trưởng</div>
         <div class="small text-muted">Bạn chỉ phê duyệt hoặc từ chối các đơn đang chờ phê duyệt. Các thao tác tạo đơn, sửa đơn, hủy đơn và nhập kho thuộc về Quản lý.</div>
@@ -188,8 +176,8 @@
                                 @if ($managerMode)
                                     @if ($order->TrangThai === 'Cho phe duyet')
                                         <div class="d-inline-flex flex-wrap justify-content-end gap-2">
-                                            <a class="btn btn-sm btn-outline-primary" href="{{ route('purchase-orders.edit', $order->MaDonDatHang) }}">Sửa</a>
-                                            <form method="post" action="{{ route('purchase-orders.cancel', $order->MaDonDatHang) }}" onsubmit="return confirm('Bạn có chắc muốn hủy đơn này không?');">
+                                            <a class="btn btn-sm btn-outline-primary" href="{{ route($routePrefix . '.edit', $order->MaDonDatHang) }}">Sửa</a>
+                                            <form method="post" action="{{ route($routePrefix . '.cancel', $order->MaDonDatHang) }}" onsubmit="return confirm('Bạn có chắc muốn hủy đơn này không?');">
                                                 @csrf
                                                 <button class="btn btn-sm btn-outline-danger" type="submit">Hủy</button>
                                             </form>

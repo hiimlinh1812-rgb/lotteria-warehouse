@@ -10,6 +10,31 @@ class DashboardController extends Controller
 {
     public function index(): View
     {
+        $role = auth()->user()->VaiTro ?? null;
+        $isStoreChief = in_array($role, ['Cua hang truong', 'Cửa hàng trưởng'], true);
+
+        if ($isStoreChief) {
+            $countDonHangChoDuyet = $this->countWhere(
+                ['dondathang', 'DonDatHang', 'tblDonDatHang'],
+                ['TrangThai' => 'Chờ phê duyệt']
+            );
+
+            $countPhieuXuatHuy = $this->countAll(['phieuxuathuy', 'PhieuXuatHuy', 'XuatHuy']);
+
+            $countPhieuThongKeTonKho = $this->countWhere(
+                ['phieukiemke', 'PhieuKiemKe'],
+                [
+                    'LoaiKiemKe' => 'Định kỳ',
+                    'TrangThai' => 'Đã duyệt',
+                ]
+            );
+
+            $countPhieuGiaiTrinh = $this->countAll(['phieugiaitrinh', 'PhieuGiaiTrinh']);
+
+            return view('dashboard.index', compact('countDonHangChoDuyet', 'countPhieuXuatHuy', 'countPhieuThongKeTonKho', 'countPhieuGiaiTrinh'));
+        }
+
+        // Thống kê cho quản lý và các vai trò khác
         $countChoDuyet = 0;
         $countThongKe = 0;
 
@@ -71,5 +96,40 @@ class DashboardController extends Controller
             'moduleKey' => $module,
             'page' => $pages[$module],
         ]);
+    }
+
+    private function countAll(array $candidates): int
+    {
+        $table = $this->resolveExistingTable($candidates);
+
+        return $table ? DB::table($table)->count() : 0;
+    }
+
+    private function countWhere(array $candidates, array $conditions): int
+    {
+        $table = $this->resolveExistingTable($candidates);
+
+        if (! $table) {
+            return 0;
+        }
+
+        $query = DB::table($table);
+
+        foreach ($conditions as $column => $value) {
+            $query->where($column, $value);
+        }
+
+        return $query->count();
+    }
+
+    private function resolveExistingTable(array $candidates): ?string
+    {
+        foreach ($candidates as $table) {
+            if (Schema::hasTable($table)) {
+                return $table;
+            }
+        }
+
+        return null;
     }
 }
