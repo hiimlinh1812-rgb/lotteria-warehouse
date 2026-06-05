@@ -139,5 +139,4 @@
             </a>
         </div>
     @endif
-                <div class="card-body">
-                    <h5 class="fw-bold text-lotteria">Giải trình</h5>
+@endsection

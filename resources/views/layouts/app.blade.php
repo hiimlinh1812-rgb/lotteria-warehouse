@@ -12,43 +12,33 @@
         .btn-lotteria { background-color: #a52a2a; color: #fff; }
         .btn-lotteria:hover { background-color: #8b2323; color: #fff; }
         .app-shell-nav { background: linear-gradient(90deg, #a52a2a 0%, #b82b2b 100%); }
-        .navbar-nav { gap: 0.25rem; }
-        .navbar-nav .nav-link {
+        .app-main-tabs {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            overflow-x: auto;
+            overflow-y: hidden;
+            flex: 1 1 auto;
+            scrollbar-width: thin;
+            padding-bottom: 0.15rem;
+        }
+        .app-main-tabs::-webkit-scrollbar {
+            height: 8px;
+        }
+        .app-main-tabs .nav-link {
             border-radius: 0.55rem;
             padding: 0.65rem 0.95rem;
+            white-space: nowrap;
+            flex: 0 0 auto;
+            color: rgba(255,255,255,0.82);
         }
-        .navbar-nav .nav-link.active {
+        .app-main-tabs .nav-link:hover {
+            color: #fff;
+            background-color: rgba(255,255,255,0.12);
+        }
+        .app-main-tabs .nav-link.active {
             font-weight: 700;
             background-color: rgba(255,255,255,0.18);
-            border-radius: 4px;
-        }
-        .top-module-bar {
-            background: #fff;
-            border: 1px solid #ead7d7;
-            border-radius: 1rem;
-            box-shadow: 0 0.25rem 1rem rgba(15, 23, 42, 0.05);
-            padding: 0.75rem;
-            margin-bottom: 1.5rem;
-        }
-        .top-module-bar a {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.65rem 0.95rem;
-            border-radius: 0.75rem;
-            text-decoration: none;
-            color: #6b7280;
-            font-weight: 600;
-        }
-        .top-module-bar a.active {
-            background: #a52a2a;
-            color: #fff;
-        }
-        .top-module-bar a:hover {
-            background: #f8e4e4;
-            color: #8b2323;
-        }
-        .top-module-bar a.active:hover {
-            background: #a52a2a;
             color: #fff;
         }
         .page-card {
@@ -90,8 +80,38 @@
         $isStoreChief = auth()->check() && in_array($role, ['Cua hang truong', 'Cửa hàng trưởng'], true);
         $isManager = auth()->check() && in_array($role, ['Quan ly', 'Quản lý'], true);
         $isEmployee = auth()->check() && in_array($role, ['Nhan vien', 'Nhân viên'], true);
-        $isManagementUser = $isManager || $isStoreChief;
-        $orderRoute = auth()->check() ? ($isManager ? route('don-hang.index') : route('purchase-orders.index')) : route('purchase-orders.index');
+        $menuItems = [];
+
+        if ($isStoreChief) {
+            $menuItems = [
+                ['label' => 'Tổng quan', 'route' => route('dashboard'), 'active' => request()->routeIs('dashboard')],
+                ['label' => 'Đơn hàng', 'route' => route('purchase-orders.index'), 'active' => request()->routeIs('purchase-orders.*')],
+                ['label' => 'Nguyên liệu gốc', 'route' => route('nguyen-lieu.index'), 'active' => request()->routeIs('nguyen-lieu.*')],
+                ['label' => 'Tài khoản', 'route' => route('tai-khoan.index'), 'active' => request()->routeIs('tai-khoan.*')],
+            ];
+        } elseif ($isManager) {
+            $menuItems = [
+                ['label' => 'Tổng quan', 'route' => route('dashboard'), 'active' => request()->routeIs('dashboard')],
+                ['label' => 'Đơn hàng', 'route' => route('don-hang.index'), 'active' => request()->routeIs('don-hang.*')],
+                ['label' => 'Xuất kho', 'route' => route('xuatkho.index'), 'active' => request()->routeIs('xuatkho.*')],
+                ['label' => 'Xuất hủy', 'route' => route('xuat-huy.index'), 'active' => request()->routeIs('xuat-huy.*')],
+                ['label' => 'Kiểm kê', 'route' => route('kiem-ke.index'), 'active' => request()->routeIs('kiem-ke.*')],
+                ['label' => 'Giải trình', 'route' => route('giai-trinh.index'), 'active' => request()->routeIs('giai-trinh.*')],
+                ['label' => 'Duyệt kiểm kê bếp', 'route' => route('quanly.kiemke.bep'), 'active' => request()->routeIs('quanly.kiemke.*')],
+                ['label' => 'Duyệt kiểm kho chính', 'route' => route('quanly.khochinh.duyet'), 'active' => request()->routeIs('quanly.khochinh.*')],
+            ];
+        } elseif ($isEmployee) {
+            $menuItems = [
+                ['label' => 'Phiếu xuất kho', 'route' => route('nhanvien.phieuxuat'), 'active' => request()->routeIs('nhanvien.*')],
+                ['label' => 'Danh sách đơn hàng', 'route' => route('ds-don-hang.index'), 'active' => request()->routeIs('ds-don-hang.*')],
+                ['label' => 'Kiểm kê cuối ngày', 'route' => route('kiemke.bep'), 'active' => request()->routeIs('kiemke.bep')],
+                ['label' => 'Kiểm kê định kỳ', 'route' => route('khochinh.kiemke'), 'active' => request()->routeIs('khochinh.kiemke')],
+            ];
+        } elseif (auth()->check()) {
+            $menuItems = [
+                ['label' => 'Danh sách đơn hàng', 'route' => route('purchase-orders.index'), 'active' => request()->routeIs('purchase-orders.*')],
+            ];
+        }
     @endphp
 
     <nav class="navbar navbar-expand-lg navbar-dark app-shell-nav mb-4 shadow-sm">
@@ -100,65 +120,14 @@
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    @if ($isStoreChief)
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">Dashboard</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('purchase-orders.*') ? 'active' : '' }}" href="{{ route('purchase-orders.index') }}">Đơn hàng</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('nguyen-lieu.*') ? 'active' : '' }}" href="{{ route('nguyen-lieu.index') }}">Nguyên liệu gốc</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('tai-khoan.*') ? 'active' : '' }}" href="{{ route('tai-khoan.index') }}">Tài khoản</a>
-                        </li>
-                    @elseif ($isManager)
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">Dashboard</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('don-hang.*') ? 'active' : '' }}" href="{{ route('don-hang.index') }}">Đơn hàng</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('xuatkho.*') ? 'active' : '' }}" href="{{ route('xuatkho.index') }}">Xuất kho</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('xuat-huy.*') ? 'active' : '' }}" href="{{ route('xuat-huy.index') }}">Xuất hủy</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('kiem-ke.*') ? 'active' : '' }}" href="{{ route('kiem-ke.index') }}">Kiểm kê</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('giai-trinh.*') ? 'active' : '' }}" href="{{ route('giai-trinh.index') }}">Giải trình</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('quanly.kiemke.*') ? 'active' : '' }}" href="{{ route('quanly.kiemke.bep') }}">Duyệt kiểm kê bếp</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('quanly.khochinh.*') ? 'active' : '' }}" href="{{ route('quanly.khochinh.duyet') }}">Duyệt kiểm kho chính</a>
-                        </li>
-                    @elseif ($isEmployee)
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('nhanvien.*') ? 'active' : '' }}" href="{{ route('nhanvien.phieuxuat') }}">Phiếu xuất kho</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('ds-don-hang.*') ? 'active' : '' }}" href="{{ route('ds-don-hang.index') }}">Danh sách đơn hàng</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('kiemke.bep') ? 'active' : '' }}" href="{{ route('kiemke.bep') }}">Kiểm kê cuối ngày</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('khochinh.kiemke') ? 'active' : '' }}" href="{{ route('khochinh.kiemke') }}">Kiểm kê định kỳ</a>
-                        </li>
-                    @elseif(auth()->check())
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('purchase-orders.*') ? 'active' : '' }}" href="{{ route('purchase-orders.index') }}">Danh sách đơn hàng</a>
-                        </li>
-                    @endif
-                </ul>
+            <div class="collapse navbar-collapse gap-3" id="navbarNav">
+                @if (! empty($menuItems))
+                    <div class="app-main-tabs">
+                        @foreach ($menuItems as $item)
+                            <a class="nav-link {{ $item['active'] ? 'active' : '' }}" href="{{ $item['route'] }}">{{ $item['label'] }}</a>
+                        @endforeach
+                    </div>
+                @endif
 
                 <div class="d-flex align-items-center text-white gap-2">
                     @auth
@@ -175,34 +144,7 @@
         </div>
     </nav>
 
-    <div class="container pb-4">
-        @if ($isStoreChief)
-            <div class="top-module-bar d-flex flex-wrap gap-2">
-                <a class="{{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">Tổng quan</a>
-                <a class="{{ request()->routeIs('purchase-orders.*') ? 'active' : '' }}" href="{{ route('purchase-orders.index') }}">Đơn hàng</a>
-                <a class="{{ request()->routeIs('nguyen-lieu.*') ? 'active' : '' }}" href="{{ route('nguyen-lieu.index') }}">Nguyên liệu gốc</a>
-                <a class="{{ request()->routeIs('tai-khoan.*') ? 'active' : '' }}" href="{{ route('tai-khoan.index') }}">Tài khoản</a>
-            </div>
-        @elseif ($isManager)
-            <div class="top-module-bar d-flex flex-wrap gap-2">
-                <a class="{{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">Tổng quan</a>
-                <a class="{{ request()->routeIs('don-hang.*') ? 'active' : '' }}" href="{{ route('don-hang.index') }}">Đơn hàng</a>
-                <a class="{{ request()->routeIs('xuatkho.*') ? 'active' : '' }}" href="{{ route('xuatkho.index') }}">Xuất kho</a>
-                <a class="{{ request()->routeIs('xuat-huy.*') ? 'active' : '' }}" href="{{ route('xuat-huy.index') }}">Xuất hủy</a>
-                <a class="{{ request()->routeIs('kiem-ke.*') ? 'active' : '' }}" href="{{ route('kiem-ke.index') }}">Kiểm kê</a>
-                <a class="{{ request()->routeIs('giai-trinh.*') ? 'active' : '' }}" href="{{ route('giai-trinh.index') }}">Giải trình</a>
-                <a class="{{ request()->routeIs('quanly.kiemke.*') ? 'active' : '' }}" href="{{ route('quanly.kiemke.bep') }}">Duyệt kiểm kê bếp</a>
-                <a class="{{ request()->routeIs('quanly.khochinh.*') ? 'active' : '' }}" href="{{ route('quanly.khochinh.duyet') }}">Duyệt kiểm kho chính</a>
-            </div>
-        @elseif ($isEmployee)
-            <div class="top-module-bar d-flex flex-wrap gap-2">
-                <a class="{{ request()->routeIs('nhanvien.*') ? 'active' : '' }}" href="{{ route('nhanvien.phieuxuat') }}">Phiếu xuất kho</a>
-                <a class="{{ request()->routeIs('ds-don-hang.*') ? 'active' : '' }}" href="{{ route('ds-don-hang.index') }}">Danh sách đơn hàng</a>
-                <a class="{{ request()->routeIs('kiemke.bep') ? 'active' : '' }}" href="{{ route('kiemke.bep') }}">Kiểm kê cuối ngày</a>
-                <a class="{{ request()->routeIs('khochinh.kiemke') ? 'active' : '' }}" href="{{ route('khochinh.kiemke') }}">Kiểm kê định kỳ</a>
-            </div>
-        @endif
-
+    <div class="container-fluid px-4 pb-4">
         @if (session('status'))
             <div class="alert alert-success shadow-sm">{{ session('status') }}</div>
         @endif
