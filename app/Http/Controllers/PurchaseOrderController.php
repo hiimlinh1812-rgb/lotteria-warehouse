@@ -18,18 +18,25 @@ class PurchaseOrderController extends Controller
     private const STATUS_CANCELLED = 'Da huy';
     private const STATUS_RECEIVED = 'Da nhan hang';
     private const STATUS_STOCKED = 'Da nhap kho';
-    private const EDITABLE_STATUSES = [self::STATUS_PENDING, self::STATUS_PROCESSING];
-    private const CANCELLABLE_STATUSES = [self::STATUS_PENDING, self::STATUS_PROCESSING];
+    private const STATUS_ALIASES = [
+        'Chờ phê duyệt' => self::STATUS_PENDING,
+        'Đang xử lý' => self::STATUS_PROCESSING,
+        'Đã duyệt' => self::STATUS_APPROVED,
+        'Từ chối' => self::STATUS_REJECTED,
+        'Đã hủy' => self::STATUS_CANCELLED,
+        'Đã nhận hàng' => self::STATUS_RECEIVED,
+        'Đã nhập kho' => self::STATUS_STOCKED,
+    ];
+    private const EDITABLE_STATUSES = [self::STATUS_PENDING];
+    private const CANCELLABLE_STATUSES = [self::STATUS_PENDING];
     private const SUMMARY_STATUSES = [
         self::STATUS_PENDING,
-        self::STATUS_PROCESSING,
         self::STATUS_APPROVED,
         self::STATUS_REJECTED,
         self::STATUS_CANCELLED,
     ];
     private const FILTER_STATUSES = [
         self::STATUS_PENDING,
-        self::STATUS_PROCESSING,
         self::STATUS_APPROVED,
         self::STATUS_REJECTED,
         self::STATUS_CANCELLED,
@@ -46,7 +53,7 @@ class PurchaseOrderController extends Controller
 
     public function index(Request $request): View
     {
-        $status = $request->query('status');
+        $status = $this->normalizeStatus($request->query('status'));
         $search = trim((string) $request->query('search'));
         $sort = (string) $request->query('sort', 'date');
         $direction = strtolower((string) $request->query('direction', 'desc')) === 'asc' ? 'asc' : 'desc';
@@ -68,7 +75,7 @@ class PurchaseOrderController extends Controller
                 DB::raw('COUNT(c.MaNguyenLieu) as SoMatHang'),
                 DB::raw('COALESCE(SUM(c.SoLuongDat), 0) as TongSoLuong')
             )
-            ->when($status, fn ($query) => $query->where('d.TrangThai', $status))
+            ->when($status, fn ($query) => $query->whereIn('d.TrangThai', $this->statusCandidates([$status])))
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($inner) use ($search) {
                     $inner->where('d.MaDonDatHang', 'like', "%{$search}%")
@@ -84,17 +91,42 @@ class PurchaseOrderController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        $summary = DB::table('DonDatHang')
-            ->select('TrangThai', DB::raw('COUNT(*) as SoLuong'))
-            ->groupBy('TrangThai')
-            ->pluck('SoLuong', 'TrangThai');
+        $orders->getCollection()->transform(function ($order) {
+            $order->TrangThai = $this->normalizeStatus($order->TrangThai);
+
+            return $order;
+        });
+
+        $summary = [];
+
+        foreach (
+            DB::table('DonDatHang')
+                ->select('TrangThai', DB::raw('COUNT(*) as SoLuong'))
+                ->groupBy('TrangThai')
+                ->get() as $row
+        ) {
+            $normalizedStatus = $this->normalizeStatus($row->TrangThai);
+
+            if ($normalizedStatus === null) {
+                continue;
+            }
+
+            $summary[$normalizedStatus] = ($summary[$normalizedStatus] ?? 0) + (int) $row->SoLuong;
+        }
 
         $summaryCards = collect(self::SUMMARY_STATUSES)
             ->mapWithKeys(fn (string $orderStatus) => [$orderStatus => (int) ($summary[$orderStatus] ?? 0)]);
 
+        $managerSummary = [
+            self::STATUS_PENDING => (int) ($summary[self::STATUS_PENDING] ?? 0),
+            self::STATUS_RECEIVED => (int) ($summary[self::STATUS_RECEIVED] ?? 0),
+            self::STATUS_STOCKED => (int) ($summary[self::STATUS_STOCKED] ?? 0),
+        ];
+
         return view('purchase-orders.index', [
             'orders' => $orders,
             'summaryCards' => $summaryCards,
+            'managerSummary' => $managerSummary,
             'status' => $status,
             'statusOptions' => self::FILTER_STATUSES,
             'search' => $search,
@@ -105,15 +137,20 @@ class PurchaseOrderController extends Controller
 
     public function create(): View
     {
+        $this->abortUnlessManager();
+
         return view('purchase-orders.create', [
             'accounts' => $this->accounts(),
             'ingredients' => $this->ingredients(),
             'nextCode' => $this->nextOrderCode(),
+            'currentAccountCode' => auth()->id(),
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
+        $this->abortUnlessManager();
+
         [$validated, $items] = $this->validatedOrderPayload($request);
 
         if ($items->isEmpty()) {
@@ -153,6 +190,12 @@ class PurchaseOrderController extends Controller
             return $orderCode;
         });
 
+        if ($request->routeIs('don-hang.*')) {
+            return redirect()
+                ->route('don-hang.index')
+                ->with('success', "Đã tạo đơn mua {$orderCode} và chuyển sang trạng thái Chờ phê duyệt.");
+        }
+
         return redirect()
             ->route('purchase-orders.show', $orderCode)
             ->with('success', "Đã tạo đơn mua {$orderCode} và chuyển sang trạng thái Chờ phê duyệt.");
@@ -160,14 +203,17 @@ class PurchaseOrderController extends Controller
 
     public function edit(string $order): View
     {
+        $this->abortUnlessManager();
+
         $orderData = DB::table('DonDatHang')
             ->where('MaDonDatHang', $order)
             ->first();
 
         abort_if(! $orderData, 404);
+        $orderData->TrangThai = $this->normalizeStatus($orderData->TrangThai);
 
         if (! in_array($orderData->TrangThai, self::EDITABLE_STATUSES, true)) {
-            abort(403, 'Chỉ được sửa đơn mua đang chờ phê duyệt hoặc đang xử lý.');
+            abort(403, 'Chỉ được sửa đơn mua đang chờ phê duyệt.');
         }
 
         $items = DB::table('ChiTietDonDatHang')
@@ -191,6 +237,8 @@ class PurchaseOrderController extends Controller
 
     public function update(Request $request, string $order): RedirectResponse
     {
+        $this->abortUnlessManager();
+
         [$validated, $items] = $this->validatedOrderPayload($request);
 
         if ($items->isEmpty()) {
@@ -200,13 +248,11 @@ class PurchaseOrderController extends Controller
         }
 
         $updated = DB::transaction(function () use ($order, $validated, $items) {
-            $currentStatus = DB::table('DonDatHang')
-                ->where('MaDonDatHang', $order)
-                ->value('TrangThai');
+            $currentStatus = $this->currentStatus($order);
 
             $affected = DB::table('DonDatHang')
                 ->where('MaDonDatHang', $order)
-                ->whereIn('TrangThai', self::EDITABLE_STATUSES)
+                ->whereIn('TrangThai', $this->statusCandidates(self::EDITABLE_STATUSES))
                 ->update([
                     'NgayDat' => $validated['NgayDat'],
                     'GhiChu' => $validated['GhiChu'] ?? null,
@@ -245,7 +291,7 @@ class PurchaseOrderController extends Controller
             ->route('purchase-orders.show', $order)
             ->with(
                 $updated ? 'success' : 'warning',
-                $updated ? 'Đã cập nhật đơn mua.' : 'Chỉ được sửa đơn đang chờ phê duyệt hoặc đang xử lý.'
+                $updated ? 'Đã cập nhật đơn mua.' : 'Chỉ được sửa đơn đang chờ phê duyệt.'
             );
     }
 
@@ -258,6 +304,7 @@ class PurchaseOrderController extends Controller
             ->first();
 
         abort_if(! $orderData, 404);
+        $orderData->TrangThai = $this->normalizeStatus($orderData->TrangThai);
 
         $items = DB::table('ChiTietDonDatHang as c')
             ->join('NguyenLieu as n', 'n.MaNguyenLieu', '=', 'c.MaNguyenLieu')
@@ -266,6 +313,14 @@ class PurchaseOrderController extends Controller
             ->orderBy('c.MaNguyenLieu')
             ->get();
 
+        $receipt = $this->latestReceipt($order);
+        $reconciliationItems = $this->reconciliationItems($order, $receipt?->MaPhieuNhan);
+        $reconciliationSummary = [
+            'matched' => $reconciliationItems->where('KetQua', 'Khớp')->count(),
+            'short' => $reconciliationItems->where('KetQua', 'Thiếu')->count(),
+            'extra' => $reconciliationItems->where('KetQua', 'Dư')->count(),
+        ];
+
         return view('purchase-orders.show', [
             'order' => $orderData,
             'items' => $items,
@@ -273,59 +328,139 @@ class PurchaseOrderController extends Controller
             'approvalAccounts' => $this->approvalAccounts(),
             'auditTrail' => $this->auditTrail($order),
             'statusLabels' => $this->statusLabels(),
+            'receipt' => $receipt,
+            'reconciliationItems' => $reconciliationItems,
+            'reconciliationSummary' => $reconciliationSummary,
         ]);
     }
 
-    public function process(Request $request, string $order): RedirectResponse
+    public function returnForm(string $order): View
     {
-        $request->validate([
+        $this->abortUnlessManager();
+
+        $orderData = $this->orderWithCreator($order);
+        $receipt = $this->latestReceipt($order);
+
+        abort_if(! $orderData, 404);
+        abort_if($orderData->TrangThai !== self::STATUS_RECEIVED || ! $receipt, 403);
+
+        return view('purchase-orders.return', [
+            'order' => $orderData,
+            'receipt' => $receipt,
+            'accounts' => $this->accounts(),
+            'returnCode' => $this->nextSequentialCode('PhieuDoiTra', 'MaPhieuDoiTra', 'PDT'),
+        ]);
+    }
+
+    public function storeReturn(Request $request, string $order): RedirectResponse
+    {
+        $this->abortUnlessManager();
+
+        $orderData = $this->orderWithCreator($order);
+        $receipt = $this->latestReceipt($order);
+
+        abort_if(! $orderData, 404);
+        abort_if($orderData->TrangThai !== self::STATUS_RECEIVED || ! $receipt, 403);
+
+        $validated = $request->validate([
+            'NgayTao' => ['required', 'date'],
+            'LoaiXuLy' => ['required', 'string', 'max:50'],
+            'LyDo' => ['required', 'string', 'max:255'],
             'MaTaiKhoan' => ['required', 'exists:TaiKhoan,MaTaiKhoan'],
-            'GhiChuXuLy' => ['nullable', 'string', 'max:180'],
         ]);
 
-        $previousStatus = $this->currentStatus($order);
-
-        $updated = DB::table('DonDatHang')
-            ->where('MaDonDatHang', $order)
-            ->where('TrangThai', self::STATUS_PENDING)
-            ->update([
-                'TrangThai' => self::STATUS_PROCESSING,
-                'GhiChu' => $this->appendApprovalNote($order, 'Xử lý', $request->MaTaiKhoan, $request->GhiChuXuLy),
-            ]);
-
-        if ($updated) {
-            $this->recordAudit(
-                $order,
-                'Chuyển xử lý',
-                $previousStatus,
-                self::STATUS_PROCESSING,
-                $request->MaTaiKhoan,
-                $request->GhiChuXuLy
-            );
+        if (! Schema::hasTable('PhieuDoiTra')) {
+            return back()->with('warning', 'Chưa có bảng phiếu đổi trả trong hệ thống hiện tại.');
         }
 
-        return back()->with(
-            $updated ? 'success' : 'warning',
-            $updated ? 'Đơn mua đã chuyển sang trạng thái Đang xử lý.' : 'Chỉ chuyển xử lý được đơn đang chờ phê duyệt.'
+        DB::table('PhieuDoiTra')->insert([
+            'MaPhieuDoiTra' => $this->nextSequentialCode('PhieuDoiTra', 'MaPhieuDoiTra', 'PDT'),
+            'NgayTao' => $validated['NgayTao'],
+            'LoaiXuLy' => $validated['LoaiXuLy'],
+            'LyDo' => $validated['LyDo'],
+            'MaTaiKhoan' => $validated['MaTaiKhoan'],
+            'MaPhieuNhan' => $receipt->MaPhieuNhan,
+        ]);
+
+        $this->recordAudit(
+            $order,
+            'Tạo phiếu đổi trả',
+            $orderData->TrangThai,
+            $orderData->TrangThai,
+            $validated['MaTaiKhoan'],
+            $validated['LoaiXuLy'] . ': ' . $validated['LyDo']
         );
+
+        return redirect()
+            ->route('don-hang.show', $order)
+            ->with('success', 'Đã tạo phiếu đổi trả cho đơn hàng.');
+    }
+
+    public function stockForm(string $order): View
+    {
+        $this->abortUnlessManager();
+
+        $orderData = $this->orderWithCreator($order);
+        $receipt = $this->latestReceipt($order);
+
+        abort_if(! $orderData, 404);
+        abort_if($orderData->TrangThai !== self::STATUS_RECEIVED || ! $receipt, 403);
+
+        return view('purchase-orders.stock', [
+            'order' => $orderData,
+            'receipt' => $receipt,
+            'accounts' => $this->accounts(),
+            'stockCode' => $this->nextSequentialCode('PhieuNhapKho', 'MaPhieuNhap', 'PNK'),
+        ]);
+    }
+
+    public function stockFromForm(Request $request, string $order): RedirectResponse
+    {
+        $this->abortUnlessManager();
+
+        $orderData = $this->orderWithCreator($order);
+        $receipt = $this->latestReceipt($order);
+
+        abort_if(! $orderData, 404);
+        abort_if($orderData->TrangThai !== self::STATUS_RECEIVED || ! $receipt, 403);
+
+        $validated = $request->validate([
+            'NgayNhap' => ['required', 'date'],
+            'GhiChu' => ['nullable', 'string', 'max:255'],
+            'MaTaiKhoan' => ['required', 'exists:TaiKhoan,MaTaiKhoan'],
+        ]);
+
+        if (Schema::hasTable('PhieuNhapKho')) {
+            DB::table('PhieuNhapKho')->insert([
+                'MaPhieuNhap' => $this->nextSequentialCode('PhieuNhapKho', 'MaPhieuNhap', 'PNK'),
+                'NgayNhap' => $validated['NgayNhap'],
+                'GhiChu' => $validated['GhiChu'] ?? null,
+                'MaTaiKhoan' => $validated['MaTaiKhoan'],
+                'MaPhieuNhan' => $receipt->MaPhieuNhan,
+            ]);
+        }
+
+        return $this->markAsStocked($order, $validated['MaTaiKhoan'], $validated['GhiChu'] ?? 'Nhập kho từ form quản lý', 'don-hang.show');
     }
 
     public function approve(Request $request, string $order): RedirectResponse
     {
+        $this->abortUnlessStoreChief();
+
         $request->validate([
             'MaTaiKhoan' => ['required', 'exists:TaiKhoan,MaTaiKhoan'],
             'GhiChuDuyet' => ['nullable', 'string', 'max:180'],
         ]);
 
         if (! $this->isApprovalAccount($request->MaTaiKhoan)) {
-            return back()->with('warning', 'Chỉ tài khoản Quản lý mới được phê duyệt đơn mua.');
+            return back()->with('warning', 'Chỉ tài khoản Cửa hàng trưởng mới được phê duyệt đơn mua.');
         }
 
         $previousStatus = $this->currentStatus($order);
 
         $updated = DB::table('DonDatHang')
             ->where('MaDonDatHang', $order)
-            ->whereIn('TrangThai', self::EDITABLE_STATUSES)
+            ->whereIn('TrangThai', $this->statusCandidates([self::STATUS_PENDING]))
             ->update([
                 'TrangThai' => self::STATUS_APPROVED,
                 'GhiChu' => $this->appendApprovalNote($order, 'Phê duyệt', $request->MaTaiKhoan, $request->GhiChuDuyet),
@@ -344,26 +479,28 @@ class PurchaseOrderController extends Controller
 
         return back()->with(
             $updated ? 'success' : 'warning',
-            $updated ? 'Đơn mua đã được phê duyệt.' : 'Chỉ phê duyệt được đơn đang chờ phê duyệt hoặc đang xử lý.'
+            $updated ? 'Đơn mua đã được phê duyệt.' : 'Chỉ phê duyệt được đơn đang chờ phê duyệt.'
         );
     }
 
     public function reject(Request $request, string $order): RedirectResponse
     {
+        $this->abortUnlessStoreChief();
+
         $request->validate([
             'MaTaiKhoan' => ['required', 'exists:TaiKhoan,MaTaiKhoan'],
             'LyDoTuChoi' => ['required', 'string', 'max:180'],
         ]);
 
         if (! $this->isApprovalAccount($request->MaTaiKhoan)) {
-            return back()->with('warning', 'Chỉ tài khoản Quản lý mới được từ chối đơn mua.');
+            return back()->with('warning', 'Chỉ tài khoản Cửa hàng trưởng mới được từ chối đơn mua.');
         }
 
         $previousStatus = $this->currentStatus($order);
 
         $updated = DB::table('DonDatHang')
             ->where('MaDonDatHang', $order)
-            ->whereIn('TrangThai', self::EDITABLE_STATUSES)
+            ->whereIn('TrangThai', $this->statusCandidates([self::STATUS_PENDING]))
             ->update([
                 'TrangThai' => self::STATUS_REJECTED,
                 'GhiChu' => $this->appendApprovalNote($order, 'Từ chối', $request->MaTaiKhoan, $request->LyDoTuChoi),
@@ -382,17 +519,19 @@ class PurchaseOrderController extends Controller
 
         return back()->with(
             $updated ? 'success' : 'warning',
-            $updated ? 'Đơn mua đã bị từ chối.' : 'Chỉ từ chối được đơn đang chờ phê duyệt hoặc đang xử lý.'
+            $updated ? 'Đơn mua đã bị từ chối.' : 'Chỉ từ chối được đơn đang chờ phê duyệt.'
         );
     }
 
     public function cancel(string $order): RedirectResponse
     {
+        $this->abortUnlessManager();
+
         $previousStatus = $this->currentStatus($order);
 
         $updated = DB::table('DonDatHang')
             ->where('MaDonDatHang', $order)
-            ->whereIn('TrangThai', self::CANCELLABLE_STATUSES)
+            ->whereIn('TrangThai', $this->statusCandidates(self::CANCELLABLE_STATUSES))
             ->update([
                 'TrangThai' => self::STATUS_CANCELLED,
                 'GhiChu' => $this->appendApprovalNote($order, 'Hủy đơn', 'Hệ thống', null),
@@ -411,17 +550,19 @@ class PurchaseOrderController extends Controller
 
         return back()->with(
             $updated ? 'success' : 'warning',
-            $updated ? 'Đơn mua đã được hủy.' : 'Chỉ hủy được đơn đang chờ phê duyệt hoặc đang xử lý.'
+            $updated ? 'Đơn mua đã được hủy.' : 'Chỉ hủy được đơn đang chờ phê duyệt.'
         );
     }
 
     public function receive(string $order): RedirectResponse
     {
+        $this->abortUnlessManager();
+
         $previousStatus = $this->currentStatus($order);
 
         $updated = DB::table('DonDatHang')
             ->where('MaDonDatHang', $order)
-            ->where('TrangThai', self::STATUS_APPROVED)
+            ->whereIn('TrangThai', $this->statusCandidates([self::STATUS_APPROVED]))
             ->update([
                 'TrangThai' => self::STATUS_RECEIVED,
                 'GhiChu' => $this->appendApprovalNote($order, 'Nhận hàng', 'Hệ thống', null),
@@ -444,33 +585,11 @@ class PurchaseOrderController extends Controller
         );
     }
 
-    public function stock(string $order): RedirectResponse
+    public function stock(Request $request, string $order): RedirectResponse
     {
-        $previousStatus = $this->currentStatus($order);
+        $this->abortUnlessManager();
 
-        $updated = DB::table('DonDatHang')
-            ->where('MaDonDatHang', $order)
-            ->where('TrangThai', self::STATUS_RECEIVED)
-            ->update([
-                'TrangThai' => self::STATUS_STOCKED,
-                'GhiChu' => $this->appendApprovalNote($order, 'Nhập kho', 'Hệ thống', null),
-            ]);
-
-        if ($updated) {
-            $this->recordAudit(
-                $order,
-                'Nhập kho',
-                $previousStatus,
-                self::STATUS_STOCKED,
-                null,
-                'Hoàn tất nhập kho'
-            );
-        }
-
-        return back()->with(
-            $updated ? 'success' : 'warning',
-            $updated ? 'Đơn mua đã chuyển sang trạng thái Đã nhập kho.' : 'Chỉ nhập kho được đơn đã nhận hàng.'
-        );
+        return $this->markAsStocked($order, null, 'Hoàn tất nhập kho', null);
     }
 
     private function accounts()
@@ -485,7 +604,7 @@ class PurchaseOrderController extends Controller
     {
         $accounts = DB::table('TaiKhoan')
             ->select('MaTaiKhoan', 'HoTen', 'VaiTro')
-            ->where('VaiTro', 'Quan ly')
+            ->whereIn('VaiTro', ['Cua hang truong', 'Cửa hàng trưởng'])
             ->orderBy('MaTaiKhoan')
             ->get();
 
@@ -496,7 +615,7 @@ class PurchaseOrderController extends Controller
     {
         return DB::table('TaiKhoan')
             ->where('MaTaiKhoan', $accountCode)
-            ->where('VaiTro', 'Quan ly')
+            ->whereIn('VaiTro', ['Cua hang truong', 'Cửa hàng trưởng'])
             ->exists();
     }
 
@@ -508,9 +627,24 @@ class PurchaseOrderController extends Controller
             ->get();
     }
 
+    private function orderWithCreator(string $order): ?object
+    {
+        $orderData = DB::table('DonDatHang as d')
+            ->join('TaiKhoan as t', 't.MaTaiKhoan', '=', 'd.MaTaiKhoan')
+            ->select('d.*', 't.HoTen', 't.VaiTro')
+            ->where('d.MaDonDatHang', $order)
+            ->first();
+
+        if ($orderData) {
+            $orderData->TrangThai = $this->normalizeStatus($orderData->TrangThai);
+        }
+
+        return $orderData;
+    }
+
     private function statusLabels(): array
     {
-        return [
+        $labels = [
             self::STATUS_PENDING => 'Chờ phê duyệt',
             self::STATUS_PROCESSING => 'Đang xử lý',
             self::STATUS_APPROVED => 'Đã duyệt',
@@ -519,6 +653,12 @@ class PurchaseOrderController extends Controller
             self::STATUS_RECEIVED => 'Đã nhận hàng',
             self::STATUS_STOCKED => 'Đã nhập kho',
         ];
+
+        foreach (self::STATUS_ALIASES as $alias => $canonical) {
+            $labels[$alias] = $labels[$canonical] ?? $alias;
+        }
+
+        return $labels;
     }
 
     private function auditTrail(string $order)
@@ -536,9 +676,9 @@ class PurchaseOrderController extends Controller
 
     private function currentStatus(string $order): ?string
     {
-        return DB::table('DonDatHang')
+        return $this->normalizeStatus(DB::table('DonDatHang')
             ->where('MaDonDatHang', $order)
-            ->value('TrangThai');
+            ->value('TrangThai'));
     }
 
     private function nextOrderCode(bool $lock = false): string
@@ -557,6 +697,22 @@ class PurchaseOrderController extends Controller
         $number = $lastCode ? ((int) substr($lastCode, 3)) + 1 : 1;
 
         return 'DDH' . str_pad((string) $number, 3, '0', STR_PAD_LEFT);
+    }
+
+    private function nextSequentialCode(string $table, string $column, string $prefix): string
+    {
+        if (! Schema::hasTable($table)) {
+            return $prefix . '001';
+        }
+
+        $lastCode = DB::table($table)
+            ->where($column, 'like', $prefix . '%')
+            ->orderByDesc($column)
+            ->value($column);
+
+        $number = $lastCode ? ((int) substr((string) $lastCode, strlen($prefix))) + 1 : 1;
+
+        return $prefix . str_pad((string) $number, 3, '0', STR_PAD_LEFT);
     }
 
     private function validatedOrderPayload(Request $request): array
@@ -594,6 +750,63 @@ class PurchaseOrderController extends Controller
         return mb_substr($combined, 0, 255);
     }
 
+    private function latestReceipt(string $order): ?object
+    {
+        if (! Schema::hasTable('PhieuNhanHang')) {
+            return null;
+        }
+
+        return DB::table('PhieuNhanHang as p')
+            ->leftJoin('TaiKhoan as t', 't.MaTaiKhoan', '=', 'p.MaTaiKhoan')
+            ->select('p.*', 't.HoTen')
+            ->where('p.MaDonDatHang', $order)
+            ->orderByDesc('p.NgayNhan')
+            ->orderByDesc('p.MaPhieuNhan')
+            ->first();
+    }
+
+    private function reconciliationItems(string $order, ?string $receiptCode)
+    {
+        $orderItems = DB::table('ChiTietDonDatHang as c')
+            ->join('NguyenLieu as n', 'n.MaNguyenLieu', '=', 'c.MaNguyenLieu')
+            ->select('c.MaNguyenLieu', 'n.TenNguyenLieu', 'n.DonViTinh', 'c.SoLuongDat')
+            ->where('c.MaDonDatHang', $order)
+            ->orderBy('c.MaNguyenLieu')
+            ->get();
+
+        if (! $receiptCode || ! Schema::hasTable('LoHang')) {
+            return $orderItems->map(function ($item) {
+                $item->SoLuongNhan = 0;
+                $item->ChenhLech = 0 - (int) $item->SoLuongDat;
+                $item->KetQua = 'Thiếu';
+
+                return $item;
+            });
+        }
+
+        $receivedMap = DB::table('LoHang')
+            ->select('MaNguyenLieu', DB::raw('SUM(SoLuongNhap) as SoLuongNhan'))
+            ->where('MaPhieuNhan', $receiptCode)
+            ->groupBy('MaNguyenLieu')
+            ->pluck('SoLuongNhan', 'MaNguyenLieu');
+
+        return $orderItems->map(function ($item) use ($receivedMap) {
+            $received = (int) ($receivedMap[$item->MaNguyenLieu] ?? 0);
+            $ordered = (int) $item->SoLuongDat;
+            $difference = $received - $ordered;
+
+            $item->SoLuongNhan = $received;
+            $item->ChenhLech = $difference;
+            $item->KetQua = match (true) {
+                $difference === 0 => 'Khớp',
+                $difference < 0 => 'Thiếu',
+                default => 'Dư',
+            };
+
+            return $item;
+        });
+    }
+
     private function recordAudit(
         string $order,
         string $action,
@@ -616,5 +829,84 @@ class PurchaseOrderController extends Controller
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+    }
+
+    private function normalizeStatus(?string $status): ?string
+    {
+        if ($status === null) {
+            return null;
+        }
+
+        return self::STATUS_ALIASES[$status] ?? $status;
+    }
+
+    private function statusCandidates(array $statuses): array
+    {
+        $normalizedStatuses = array_values(array_unique(array_map(
+            fn (?string $status) => $this->normalizeStatus($status),
+            $statuses
+        )));
+
+        $aliasedStatuses = array_keys(array_filter(
+            self::STATUS_ALIASES,
+            fn (string $canonical) => in_array($canonical, $normalizedStatuses, true)
+        ));
+
+        return array_values(array_unique(array_merge($normalizedStatuses, $aliasedStatuses)));
+    }
+
+    private function abortUnlessManager(): void
+    {
+        abort_unless($this->isManagerUser(), 403, 'Chỉ Quản lý được thực hiện thao tác này.');
+    }
+
+    private function abortUnlessStoreChief(): void
+    {
+        abort_unless($this->isStoreChiefUser(), 403, 'Chỉ Cửa hàng trưởng được thực hiện thao tác này.');
+    }
+
+    private function isManagerUser(): bool
+    {
+        $role = auth()->user()->VaiTro ?? null;
+
+        return in_array($role, ['Quan ly', 'Quản lý'], true);
+    }
+
+    private function isStoreChiefUser(): bool
+    {
+        $role = auth()->user()->VaiTro ?? null;
+
+        return in_array($role, ['Cua hang truong', 'Cửa hàng trưởng'], true);
+    }
+
+    private function markAsStocked(string $order, ?string $accountCode, ?string $note, ?string $redirectRoute): RedirectResponse
+    {
+        $previousStatus = $this->currentStatus($order);
+
+        $updated = DB::table('DonDatHang')
+            ->where('MaDonDatHang', $order)
+            ->whereIn('TrangThai', $this->statusCandidates([self::STATUS_RECEIVED]))
+            ->update([
+                'TrangThai' => self::STATUS_STOCKED,
+                'GhiChu' => $this->appendApprovalNote($order, 'Nhập kho', $accountCode ?? 'Hệ thống', $note),
+            ]);
+
+        if ($updated) {
+            $this->recordAudit(
+                $order,
+                'Nhập kho',
+                $previousStatus,
+                self::STATUS_STOCKED,
+                $accountCode,
+                $note ?? 'Hoàn tất nhập kho'
+            );
+        }
+
+        $target = $redirectRoute ? redirect()->route($redirectRoute, $order) : back();
+
+        return $target->with(
+            $updated ? 'success' : 'warning',
+            $updated ? 'Đơn mua đã chuyển sang trạng thái Đã nhập kho.' : 'Chỉ nhập kho được đơn đã nhận hàng.'
+        );
     }
 }

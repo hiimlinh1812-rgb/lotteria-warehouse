@@ -40,7 +40,12 @@ class AuthController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect()->intended('/purchase-orders');
+        $defaultRoute = match ($user->VaiTro) {
+            'Quan ly', 'Quản lý', 'Cua hang truong', 'Cửa hàng trưởng' => route('dashboard'),
+            default => route('purchase-orders.index'),
+        };
+
+        return redirect()->intended($defaultRoute);
     }
 
     public function logout(Request $request)

@@ -1,8 +1,12 @@
 @extends('layouts.app')
 
-@section('title', 'Đặt hàng & phê duyệt')
+@section('title', 'Trang Đơn Hàng')
 
 @php
+    $isManagerUser = auth()->check() && in_array(auth()->user()->VaiTro ?? null, ['Quan ly', 'Quản lý'], true);
+    $isStoreChiefUser = auth()->check() && in_array(auth()->user()->VaiTro ?? null, ['Cua hang truong', 'Cửa hàng trưởng'], true);
+    $managerMode = request()->routeIs('don-hang.*');
+    $routePrefix = $managerMode ? 'don-hang' : 'purchase-orders';
     $statusLabels = [
         'Cho phe duyet' => 'Chờ phê duyệt',
         'Dang xu ly' => 'Đang xử lý',
@@ -14,11 +18,13 @@
     ];
     $statusClass = function (?string $status) {
         return match ($status) {
-            'Da duyet' => 'approved',
             'Cho phe duyet' => 'pending',
-            'Tu choi', 'Da huy' => 'rejected',
             'Dang xu ly' => 'processing',
-            'Da nhan hang', 'Da nhap kho' => 'received',
+            'Da duyet' => 'approved',
+            'Da nhan hang' => 'received',
+            'Da nhap kho' => 'stocked',
+            'Tu choi' => 'rejected',
+            'Da huy' => 'cancelled',
             default => '',
         };
     };
@@ -29,10 +35,10 @@
 
         return $direction === 'asc' ? '↑' : '↓';
     };
-    $sortUrl = function (string $column) use ($sort, $direction, $search, $status) {
+    $sortUrl = function (string $column) use ($sort, $direction, $search, $status, $routePrefix) {
         $nextDirection = $sort === $column && $direction === 'asc' ? 'desc' : 'asc';
 
-        return route('purchase-orders.index', array_filter([
+        return route($routePrefix . '.index', array_filter([
             'search' => $search !== '' ? $search : null,
             'status' => $status ?: null,
             'sort' => $column,
@@ -42,107 +48,206 @@
 @endphp
 
 @section('content')
-    <div class="topbar">
-        <div>
-            <h1>Quy trình đặt hàng & phê duyệt đơn mua</h1>
-            <p class="subtle">Theo dõi đề xuất mua nguyên liệu, tạo đơn mới và chốt phê duyệt trước khi nhận hàng.</p>
-        </div>
-        <a class="btn btn-primary" href="{{ route('purchase-orders.create') }}">+ Tạo đơn mua</a>
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+    <div>
+        <h2 class="text-lotteria fw-bold mb-1">{{ $managerMode ? 'Trang Đơn Hàng' : ($isStoreChiefUser ? 'Phê Duyệt Đơn Mua' : 'Đặt hàng & phê duyệt đơn mua') }}</h2>
+        <p class="text-muted mb-0">
+            {{ $managerMode
+                ? 'Quản lý theo dõi đơn đặt hàng, gửi đơn sang cửa hàng trưởng phê duyệt và xử lý các đơn đã nhận hàng.'
+                : ($isStoreChiefUser
+                    ? 'Cửa hàng trưởng kiểm tra các đơn chờ phê duyệt, xem chi tiết và quyết định duyệt hoặc từ chối.'
+                    : 'Theo dõi đề xuất mua nguyên liệu, cập nhật trạng thái và kiểm soát luồng phê duyệt đơn mua.') }}
+        </p>
     </div>
+    @if ($isManagerUser && $managerMode)
+        <a href="{{ route($routePrefix . '.create') }}" class="btn btn-lotteria fw-bold">+ Tạo đơn đặt hàng</a>
+    @endif
+</div>
 
-    <div class="stats">
-        <div class="stat">
-            <span class="subtle">Chờ phê duyệt</span>
-            <strong>{{ $summaryCards['Cho phe duyet'] ?? 0 }}</strong>
-        </div>
-        <div class="stat">
-            <span class="subtle">Đang xử lý</span>
-            <strong>{{ $summaryCards['Dang xu ly'] ?? 0 }}</strong>
-        </div>
-        <div class="stat">
-            <span class="subtle">Đã duyệt</span>
-            <strong>{{ $summaryCards['Da duyet'] ?? 0 }}</strong>
-        </div>
-        <div class="stat">
-            <span class="subtle">Đã hủy</span>
-            <strong>{{ $summaryCards['Da huy'] ?? 0 }}</strong>
-        </div>
+@if ($managerMode)
+    <div class="alert alert-light border border-start border-4 border-danger-subtle shadow-sm mb-4" role="alert">
+        <div class="fw-bold text-lotteria mb-1">Quyền của Quản lý</div>
+        <div class="small text-muted">Bạn được tạo đơn, sửa và hủy các đơn đang chờ phê duyệt; khi đơn đã nhận hàng thì được xem đối soát, đổi trả và nhập kho.</div>
     </div>
+@elseif ($isStoreChiefUser)
+    <div class="alert alert-light border border-start border-4 border-warning shadow-sm mb-4" role="alert">
+        <div class="fw-bold text-lotteria mb-1">Quyền của Cửa hàng trưởng</div>
+        <div class="small text-muted">Bạn chỉ phê duyệt hoặc từ chối các đơn đang chờ phê duyệt. Các thao tác tạo đơn, sửa đơn, hủy đơn và nhập kho thuộc về Quản lý.</div>
+    </div>
+@endif
 
-    <div class="panel">
-        <form class="toolbar" method="get" action="{{ route('purchase-orders.index') }}">
-            <div class="field">
-                <label for="search">Tìm kiếm</label>
-                <input id="search" name="search" value="{{ $search }}" placeholder="Mã đơn, người tạo, ghi chú">
+@if ($managerMode)
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card page-card summary-tile h-100">
+                <div class="card-body">
+                    <div class="text-muted fw-semibold">Chờ phê duyệt</div>
+                    <div class="display-6 fw-bold text-warning-emphasis">{{ $managerSummary['Cho phe duyet'] ?? 0 }}</div>
+                </div>
             </div>
-            <div class="field">
-                <label for="status">Trạng thái</label>
-                <select id="status" name="status">
+        </div>
+        <div class="col-md-4">
+            <div class="card page-card summary-tile h-100">
+                <div class="card-body">
+                    <div class="text-muted fw-semibold">Đã nhận hàng</div>
+                    <div class="display-6 fw-bold text-primary">{{ $managerSummary['Da nhan hang'] ?? 0 }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card page-card summary-tile h-100">
+                <div class="card-body">
+                    <div class="text-muted fw-semibold">Đã nhập kho</div>
+                    <div class="display-6 fw-bold text-info-emphasis">{{ $managerSummary['Da nhap kho'] ?? 0 }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+@elseif ($isStoreChiefUser)
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card page-card summary-tile h-100">
+                <div class="card-body">
+                    <div class="text-muted fw-semibold">Chờ phê duyệt</div>
+                    <div class="display-6 fw-bold text-warning-emphasis">{{ $summaryCards['Cho phe duyet'] ?? 0 }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card page-card summary-tile h-100">
+                <div class="card-body">
+                    <div class="text-muted fw-semibold">Đã duyệt</div>
+                    <div class="display-6 fw-bold text-success">{{ $summaryCards['Da duyet'] ?? 0 }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card page-card summary-tile h-100">
+                <div class="card-body">
+                    <div class="text-muted fw-semibold">Từ chối / Hủy</div>
+                    <div class="display-6 fw-bold text-danger">{{ ($summaryCards['Tu choi'] ?? 0) + ($summaryCards['Da huy'] ?? 0) }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+@endif
+
+<div class="card page-card mb-4">
+    <div class="card-body">
+        <form class="row g-3 align-items-end" method="get" action="{{ route($routePrefix . '.index') }}">
+            <div class="col-md-5">
+                <label for="search" class="form-label fw-semibold">Tìm kiếm</label>
+                <input id="search" name="search" class="form-control" value="{{ $search }}" placeholder="Mã đơn, người tạo, ghi chú">
+            </div>
+            <div class="col-md-3">
+                <label for="status" class="form-label fw-semibold">Trạng thái</label>
+                <select id="status" name="status" class="form-select">
                     <option value="">Tất cả</option>
                     @foreach ($statusOptions as $option)
-                        <option value="{{ $option }}" @selected($status === $option)>{{ $statusLabels[$option] ?? $option }}</option>
+                        <option value="{{ $option }}" {{ $status === $option ? 'selected' : '' }}>{{ $statusLabels[$option] ?? $option }}</option>
                     @endforeach
                 </select>
             </div>
-            <button class="btn btn-secondary" type="submit">Lọc</button>
-            <a class="btn btn-secondary" href="{{ route('purchase-orders.index') }}">Đặt lại</a>
+            <div class="col-md-auto">
+                <button class="btn btn-lotteria">Lọc</button>
+            </div>
+            <div class="col-md-auto">
+                <a class="btn btn-outline-secondary" href="{{ route($routePrefix . '.index') }}">Đặt lại</a>
+            </div>
         </form>
     </div>
+</div>
 
-    <div class="panel">
-        <table>
-            <thead>
-                <tr>
-                    <th><a href="{{ $sortUrl('code') }}">Mã đơn {{ $sortIcon('code') }}</a></th>
-                    <th><a href="{{ $sortUrl('date') }}">Ngày đặt {{ $sortIcon('date') }}</a></th>
-                    <th>Người tạo</th>
-                    <th><a href="{{ $sortUrl('status') }}">Trạng thái {{ $sortIcon('status') }}</a></th>
-                    <th><a href="{{ $sortUrl('items') }}">Mặt hàng {{ $sortIcon('items') }}</a></th>
-                    <th><a href="{{ $sortUrl('quantity') }}">Tổng SL {{ $sortIcon('quantity') }}</a></th>
-                    <th>Ghi chú</th>
-                    <th>Thao tác</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($orders as $order)
+<div class="card page-card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
                     <tr>
-                        <td><strong>{{ $order->MaDonDatHang }}</strong></td>
-                        <td>{{ \Illuminate\Support\Carbon::parse($order->NgayDat)->format('d/m/Y') }}</td>
-                        <td>{{ $order->HoTen }}</td>
-                        <td><span class="badge {{ $statusClass($order->TrangThai) }}">{{ $statusLabels[$order->TrangThai] ?? $order->TrangThai }}</span></td>
-                        <td>{{ $order->SoMatHang }}</td>
-                        <td>{{ number_format($order->TongSoLuong) }}</td>
-                        <td>{{ $order->GhiChu ?: '-' }}</td>
-                        <td>
-                            <div class="actions">
-                                <a class="btn btn-secondary" href="{{ route('purchase-orders.show', $order->MaDonDatHang) }}">Chi tiết</a>
-                                @if (in_array($order->TrangThai, ['Cho phe duyet', 'Dang xu ly'], true))
-                                    <a class="btn btn-secondary" href="{{ route('purchase-orders.edit', $order->MaDonDatHang) }}">Sửa</a>
-                                    <form method="post" action="{{ route('purchase-orders.cancel', $order->MaDonDatHang) }}" onsubmit="return confirm('Bạn có chắc muốn hủy đơn này không?');">
-                                        @csrf
-                                        <button class="btn btn-danger" type="submit">Hủy đơn</button>
-                                    </form>
-                                @elseif ($order->TrangThai === 'Da duyet')
-                                    <form method="post" action="{{ route('purchase-orders.receive', $order->MaDonDatHang) }}">
-                                        @csrf
-                                        <button class="btn btn-success" type="submit">Nhận hàng</button>
-                                    </form>
-                                @elseif ($order->TrangThai === 'Da nhan hang')
-                                    <form method="post" action="{{ route('purchase-orders.stock', $order->MaDonDatHang) }}">
-                                        @csrf
-                                        <button class="btn btn-success" type="submit">Nhập kho</button>
-                                    </form>
+                        <th><a class="text-decoration-none text-dark" href="{{ $sortUrl('code') }}">Mã đơn {{ $sortIcon('code') }}</a></th>
+                        <th><a class="text-decoration-none text-dark" href="{{ $sortUrl('date') }}">Ngày đặt {{ $sortIcon('date') }}</a></th>
+                        <th>Người tạo</th>
+                        <th><a class="text-decoration-none text-dark" href="{{ $sortUrl('status') }}">Trạng thái {{ $sortIcon('status') }}</a></th>
+                        <th><a class="text-decoration-none text-dark" href="{{ $sortUrl('items') }}">Mặt hàng {{ $sortIcon('items') }}</a></th>
+                        <th><a class="text-decoration-none text-dark" href="{{ $sortUrl('quantity') }}">Tổng SL {{ $sortIcon('quantity') }}</a></th>
+                        <th>Ghi chú</th>
+                        <th class="text-end">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($orders as $order)
+                        <tr>
+                            <td class="fw-bold">{{ $order->MaDonDatHang }}</td>
+                            <td>{{ \Illuminate\Support\Carbon::parse($order->NgayDat)->format('d/m/Y') }}</td>
+                            <td>{{ $order->HoTen }}</td>
+                            <td><span class="status-badge {{ $statusClass($order->TrangThai) }}">{{ $statusLabels[$order->TrangThai] ?? $order->TrangThai }}</span></td>
+                            <td>{{ $order->SoMatHang }}</td>
+                            <td>{{ number_format($order->TongSoLuong) }}</td>
+                            <td>{{ $order->GhiChu ?: '-' }}</td>
+                            <td class="text-end">
+                                @if ($managerMode)
+                                    @if ($order->TrangThai === 'Cho phe duyet')
+                                        <div class="d-inline-flex flex-wrap justify-content-end gap-2">
+                                            <a class="btn btn-sm btn-outline-primary" href="{{ route('purchase-orders.edit', $order->MaDonDatHang) }}">Sửa</a>
+                                            <form method="post" action="{{ route('purchase-orders.cancel', $order->MaDonDatHang) }}" onsubmit="return confirm('Bạn có chắc muốn hủy đơn này không?');">
+                                                @csrf
+                                                <button class="btn btn-sm btn-outline-danger" type="submit">Hủy</button>
+                                            </form>
+                                        </div>
+                                    @elseif ($order->TrangThai === 'Da nhan hang')
+                                        <div class="d-inline-flex flex-wrap justify-content-end gap-2">
+                                            <a class="btn btn-sm btn-outline-primary" href="{{ route('don-hang.show', $order->MaDonDatHang) }}">Xem</a>
+                                            <a class="btn btn-sm btn-outline-danger" href="{{ route('don-hang.return.create', $order->MaDonDatHang) }}">Đổi trả</a>
+                                            <a class="btn btn-sm btn-success" href="{{ route('don-hang.stock.create', $order->MaDonDatHang) }}">Nhập kho</a>
+                                        </div>
+                                    @elseif ($order->TrangThai === 'Da nhap kho')
+                                        <div class="d-inline-flex flex-wrap justify-content-end gap-2">
+                                            <a class="btn btn-sm btn-outline-secondary" href="{{ route('don-hang.show', $order->MaDonDatHang) }}">Xem lịch sử/chi tiết</a>
+                                        </div>
+                                    @else
+                                        <span class="text-muted small">Không có thao tác</span>
+                                    @endif
+                                @elseif ($isStoreChiefUser)
+                                    <div class="d-inline-flex flex-wrap justify-content-end gap-2">
+                                        @if ($order->TrangThai === 'Cho phe duyet')
+                                            <a class="btn btn-sm btn-outline-primary" href="{{ route('purchase-orders.show', $order->MaDonDatHang) }}">Xem & duyệt</a>
+                                        @else
+                                            <a class="btn btn-sm btn-outline-secondary" href="{{ route('purchase-orders.show', $order->MaDonDatHang) }}">Xem lịch sử/chi tiết</a>
+                                        @endif
+                                    </div>
+                                @else
+                                    <div class="d-inline-flex flex-wrap justify-content-end gap-2">
+                                        <a class="btn btn-sm btn-outline-secondary" href="{{ route('purchase-orders.show', $order->MaDonDatHang) }}">Chi tiết</a>
+                                        @if ($order->TrangThai === 'Cho phe duyet')
+                                            <a class="btn btn-sm btn-outline-primary" href="{{ route('purchase-orders.edit', $order->MaDonDatHang) }}">Sửa</a>
+                                            <form method="post" action="{{ route('purchase-orders.cancel', $order->MaDonDatHang) }}" onsubmit="return confirm('Bạn có chắc muốn hủy đơn này không?');">
+                                                @csrf
+                                                <button class="btn btn-sm btn-outline-danger" type="submit">Hủy đơn</button>
+                                            </form>
+                                        @elseif ($order->TrangThai === 'Da duyet')
+                                            <form method="post" action="{{ route('purchase-orders.receive', $order->MaDonDatHang) }}">
+                                                @csrf
+                                                <button class="btn btn-sm btn-outline-success" type="submit">Nhận hàng</button>
+                                            </form>
+                                        @elseif ($order->TrangThai === 'Da nhan hang')
+                                            <form method="post" action="{{ route('purchase-orders.stock', $order->MaDonDatHang) }}">
+                                                @csrf
+                                                <button class="btn btn-sm btn-success" type="submit">Nhập kho</button>
+                                            </form>
+                                        @endif
+                                    </div>
                                 @endif
-                            </div>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="8">Chưa có đơn mua phù hợp.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-        <div class="pagination">{{ $orders->links() }}</div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">Chưa có đơn hàng phù hợp.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+        <div>{{ $orders->links() }}</div>
     </div>
+</div>
 @endsection

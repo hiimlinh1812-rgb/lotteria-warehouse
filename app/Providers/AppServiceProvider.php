@@ -23,5 +23,17 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('isCuaHangTruong', function ($user) {
             return in_array($user->VaiTro, ['Cua hang truong', 'Cửa hàng trưởng'], true);
         });
+
+        Gate::define('isQuanLy', function ($user) {
+            return in_array($user->VaiTro, ['Quan ly', 'Quản lý'], true);
+        });
+
+        Gate::define('isNhanVien', function ($user) {
+            return in_array($user->VaiTro, ['Nhan vien', 'Nhân viên'], true);
+        });
+
+        Gate::define('isManagementUser', function ($user) {
+            return in_array($user->VaiTro, ['Quan ly', 'Quản lý', 'Cua hang truong', 'Cửa hàng trưởng'], true);
+        });
     }
 }

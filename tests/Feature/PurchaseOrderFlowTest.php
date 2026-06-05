@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\TaiKhoan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
@@ -66,6 +67,13 @@ class PurchaseOrderFlowTest extends TestCase
                 'VaiTro' => 'Quan ly',
             ],
             [
+                'MaTaiKhoan' => 'CHT001',
+                'HoTen' => 'Nguyen Van An',
+                'MatKhau' => 'pw',
+                'SoDienThoai' => '0901234567',
+                'VaiTro' => 'Cua hang truong',
+            ],
+            [
                 'MaTaiKhoan' => 'NV001',
                 'HoTen' => 'Pham Thi Dung',
                 'MatKhau' => 'pw',
@@ -106,6 +114,8 @@ class PurchaseOrderFlowTest extends TestCase
             'MaNguyenLieu' => 'NL001',
             'SoLuongDat' => 2,
         ]);
+
+        $this->actingAs(TaiKhoan::query()->find('QL001'));
     }
 
     public function test_index_displays_purchase_order_screen(): void
@@ -240,20 +250,12 @@ class PurchaseOrderFlowTest extends TestCase
         ]);
     }
 
-    public function test_process_then_approve_updates_order_status(): void
+    public function test_store_chief_can_approve_pending_order(): void
     {
-        $this->post('/purchase-orders/DDH001/process', [
-            'MaTaiKhoan' => 'NV001',
-            'GhiChuXuLy' => 'Kiem tra ton kho',
-        ])->assertRedirect();
-
-        $this->assertDatabaseHas('DonDatHang', [
-            'MaDonDatHang' => 'DDH001',
-            'TrangThai' => 'Dang xu ly',
-        ]);
+        $this->actingAs(TaiKhoan::query()->find('CHT001'));
 
         $this->post('/purchase-orders/DDH001/approve', [
-            'MaTaiKhoan' => 'QL001',
+            'MaTaiKhoan' => 'CHT001',
             'GhiChuDuyet' => 'Dong y',
         ])->assertRedirect();
 
@@ -264,35 +266,57 @@ class PurchaseOrderFlowTest extends TestCase
 
         $this->assertDatabaseHas('TruyVetDonDatHang', [
             'MaDonDatHang' => 'DDH001',
-            'HanhDong' => 'Chuyển xử lý',
-            'TrangThaiTruoc' => 'Cho phe duyet',
-            'TrangThaiSau' => 'Dang xu ly',
-            'MaTaiKhoan' => 'NV001',
-        ]);
-
-        $this->assertDatabaseHas('TruyVetDonDatHang', [
-            'MaDonDatHang' => 'DDH001',
             'HanhDong' => 'Phê duyệt đơn',
-            'TrangThaiTruoc' => 'Dang xu ly',
+            'TrangThaiTruoc' => 'Cho phe duyet',
             'TrangThaiSau' => 'Da duyet',
-            'MaTaiKhoan' => 'QL001',
+            'MaTaiKhoan' => 'CHT001',
         ]);
     }
 
-    public function test_non_manager_cannot_approve_order(): void
+    public function test_non_store_chief_cannot_approve_order(): void
     {
-        $response = $this->from('/purchase-orders/DDH001')->post('/purchase-orders/DDH001/approve', [
-            'MaTaiKhoan' => 'NV001',
+        $response = $this->post('/purchase-orders/DDH001/approve', [
+            'MaTaiKhoan' => 'QL001',
             'GhiChuDuyet' => 'Thu phe duyet',
         ]);
 
-        $response->assertRedirect('/purchase-orders/DDH001');
-        $response->assertSessionHas('warning');
+        $response->assertForbidden();
 
         $this->assertDatabaseHas('DonDatHang', [
             'MaDonDatHang' => 'DDH001',
             'TrangThai' => 'Cho phe duyet',
         ]);
+    }
+
+    public function test_store_chief_cannot_create_update_cancel_or_stock_order(): void
+    {
+        $this->actingAs(TaiKhoan::query()->find('CHT001'));
+
+        $this->post('/purchase-orders', [
+            'NgayDat' => '2026-06-04',
+            'MaTaiKhoan' => 'NV001',
+            'GhiChu' => 'Thu tao moi',
+            'items' => [
+                ['MaNguyenLieu' => 'NL001', 'SoLuongDat' => 2],
+            ],
+        ])->assertForbidden();
+
+        $this->put('/purchase-orders/DDH001', [
+            'NgayDat' => '2026-06-05',
+            'MaTaiKhoan' => 'QL001',
+            'GhiChu' => 'Thu cap nhat',
+            'items' => [
+                ['MaNguyenLieu' => 'NL002', 'SoLuongDat' => 3],
+            ],
+        ])->assertForbidden();
+
+        $this->post('/purchase-orders/DDH001/cancel')->assertForbidden();
+
+        DB::table('DonDatHang')
+            ->where('MaDonDatHang', 'DDH001')
+            ->update(['TrangThai' => 'Da nhan hang']);
+
+        $this->post('/purchase-orders/DDH001/stock')->assertForbidden();
     }
 
     public function test_cancel_marks_pending_order_as_cancelled(): void
