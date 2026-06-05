@@ -35,11 +35,12 @@ class DashboardController extends Controller
         }
 
         // Thống kê cho quản lý và các vai trò khác
-        $countChoDuyet = 0;
+        $countDonHang = 0;
         $countThongKe = 0;
+        $countChoDuyetKiemKe = 0;
 
         if (Schema::hasTable('PhieuKiemKe')) {
-            $countChoDuyet = DB::table('PhieuKiemKe')
+            $countChoDuyetKiemKe = DB::table('PhieuKiemKe')
                 ->where('LoaiKiemKe', 'Định kỳ')
                 ->where('TrangThai', 'Chờ duyệt')
                 ->count();
@@ -48,6 +49,16 @@ class DashboardController extends Controller
                 ->where('LoaiKiemKe', 'Định kỳ')
                 ->where('TrangThai', 'Đã duyệt')
                 ->count();
+        }
+
+        // Đếm số đơn hàng
+        if (Schema::hasTable('DonDatHang')) {
+            $countDonHang = DB::table('DonDatHang')->count();
+        }
+
+        $countXuatKho = 0;
+        if (Schema::hasTable('PhieuXuatKho')) {
+            $countXuatKho = DB::table('PhieuXuatKho')->count();
         }
 
         $countXuatHuy = 0;
@@ -62,7 +73,7 @@ class DashboardController extends Controller
             $countGiaiTrinh = DB::table('PhieuGiaiTrinh')->count();
         }
 
-        return view('dashboard.index', compact('countChoDuyet', 'countXuatHuy', 'countThongKe', 'countGiaiTrinh'));
+        return view('dashboard.index', compact('countDonHang', 'countXuatKho', 'countXuatHuy', 'countThongKe', 'countGiaiTrinh', 'countChoDuyetKiemKe'));
     }
 
     public function module(string $module): View

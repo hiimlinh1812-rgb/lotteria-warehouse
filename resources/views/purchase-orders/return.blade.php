@@ -46,14 +46,13 @@
                     </div>
                     <div class="col-md-4">
                         <label for="MaTaiKhoan" class="form-label fw-semibold">Người lập phiếu</label>
-                        <select id="MaTaiKhoan" name="MaTaiKhoan" class="form-select" required>
-                            <option value="">Chọn tài khoản</option>
-                            @foreach ($accounts as $account)
-                                <option value="{{ $account->MaTaiKhoan }}" {{ old('MaTaiKhoan', auth()->user()->MaTaiKhoan ?? '') == $account->MaTaiKhoan ? 'selected' : '' }}>
-                                    {{ $account->MaTaiKhoan }} - {{ $account->HoTen }}
-                                </option>
-                            @endforeach
-                        </select>
+                        <input
+                            id="MaTaiKhoan"
+                            class="form-control"
+                            value="{{ (auth()->user()->MaTaiKhoan ?? '') . ' - ' . (auth()->user()->HoTen ?? '') }}"
+                            readonly
+                        >
+                        <input type="hidden" name="MaTaiKhoan" value="{{ old('MaTaiKhoan', auth()->user()->MaTaiKhoan ?? '') }}">
                     </div>
                     <div class="col-12">
                         <label for="LyDo" class="form-label fw-semibold">Lý do</label>

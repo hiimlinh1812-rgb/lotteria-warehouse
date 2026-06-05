@@ -13,6 +13,8 @@ class PurchaseOrderController extends Controller
     private const TRACE_TABLE = 'TruyVetDonDatHang';
     private const STATUS_PENDING = 'Cho phe duyet';
     private const STATUS_PROCESSING = 'Dang xu ly';
+    private const STATUS_WAITING_RECEIVE = 'Cho xu ly';
+    private const STATUS_RETURNING = 'Dang doi tra';
     private const STATUS_APPROVED = 'Da duyet';
     private const STATUS_REJECTED = 'Tu choi';
     private const STATUS_CANCELLED = 'Da huy';
@@ -21,6 +23,9 @@ class PurchaseOrderController extends Controller
     private const STATUS_ALIASES = [
         'Chờ phê duyệt' => self::STATUS_PENDING,
         'Đang xử lý' => self::STATUS_PROCESSING,
+        'Chờ xử lý' => self::STATUS_WAITING_RECEIVE,
+        'Chờ nhận hàng' => self::STATUS_WAITING_RECEIVE,
+        'Đang đổi trả' => self::STATUS_RETURNING,
         'Đã duyệt' => self::STATUS_APPROVED,
         'Từ chối' => self::STATUS_REJECTED,
         'Đã hủy' => self::STATUS_CANCELLED,
@@ -37,11 +42,11 @@ class PurchaseOrderController extends Controller
     ];
     private const FILTER_STATUSES = [
         self::STATUS_PENDING,
-        self::STATUS_APPROVED,
-        self::STATUS_REJECTED,
-        self::STATUS_CANCELLED,
+        self::STATUS_WAITING_RECEIVE,
+        self::STATUS_RETURNING,
         self::STATUS_RECEIVED,
         self::STATUS_STOCKED,
+        self::STATUS_REJECTED,
     ];
     private const SORT_FIELDS = [
         'code' => 'd.MaDonDatHang',
@@ -119,6 +124,7 @@ class PurchaseOrderController extends Controller
 
         $managerSummary = [
             self::STATUS_PENDING => (int) ($summary[self::STATUS_PENDING] ?? 0),
+            self::STATUS_WAITING_RECEIVE => (int) ($summary[self::STATUS_WAITING_RECEIVE] ?? 0),
             self::STATUS_RECEIVED => (int) ($summary[self::STATUS_RECEIVED] ?? 0),
             self::STATUS_STOCKED => (int) ($summary[self::STATUS_STOCKED] ?? 0),
         ];
@@ -342,12 +348,11 @@ class PurchaseOrderController extends Controller
         $receipt = $this->latestReceipt($order);
 
         abort_if(! $orderData, 404);
-        abort_if($orderData->TrangThai !== self::STATUS_RECEIVED || ! $receipt, 403);
+        abort_if($orderData->TrangThai !== self::STATUS_WAITING_RECEIVE || ! $receipt, 403);
 
         return view('purchase-orders.return', [
             'order' => $orderData,
             'receipt' => $receipt,
-            'accounts' => $this->accounts(),
             'returnCode' => $this->nextSequentialCode('PhieuDoiTra', 'MaPhieuDoiTra', 'PDT'),
         ]);
     }
@@ -360,7 +365,7 @@ class PurchaseOrderController extends Controller
         $receipt = $this->latestReceipt($order);
 
         abort_if(! $orderData, 404);
-        abort_if($orderData->TrangThai !== self::STATUS_RECEIVED || ! $receipt, 403);
+        abort_if($orderData->TrangThai !== self::STATUS_WAITING_RECEIVE || ! $receipt, 403);
 
         $validated = $request->validate([
             'NgayTao' => ['required', 'date'],
@@ -373,27 +378,36 @@ class PurchaseOrderController extends Controller
             return back()->with('warning', 'Chưa có bảng phiếu đổi trả trong hệ thống hiện tại.');
         }
 
-        DB::table('PhieuDoiTra')->insert([
-            'MaPhieuDoiTra' => $this->nextSequentialCode('PhieuDoiTra', 'MaPhieuDoiTra', 'PDT'),
-            'NgayTao' => $validated['NgayTao'],
-            'LoaiXuLy' => $validated['LoaiXuLy'],
-            'LyDo' => $validated['LyDo'],
-            'MaTaiKhoan' => $validated['MaTaiKhoan'],
-            'MaPhieuNhan' => $receipt->MaPhieuNhan,
-        ]);
+        DB::transaction(function () use ($validated, $order, $orderData, $receipt) {
+            DB::table('PhieuDoiTra')->insert([
+                'MaPhieuDoiTra' => $this->nextSequentialCode('PhieuDoiTra', 'MaPhieuDoiTra', 'PDT'),
+                'NgayTao' => $validated['NgayTao'],
+                'LoaiXuLy' => $validated['LoaiXuLy'],
+                'LyDo' => $validated['LyDo'],
+                'MaTaiKhoan' => $validated['MaTaiKhoan'],
+                'MaPhieuNhan' => $receipt->MaPhieuNhan,
+            ]);
 
-        $this->recordAudit(
-            $order,
-            'Tạo phiếu đổi trả',
-            $orderData->TrangThai,
-            $orderData->TrangThai,
-            $validated['MaTaiKhoan'],
-            $validated['LoaiXuLy'] . ': ' . $validated['LyDo']
-        );
+            DB::table('DonDatHang')
+                ->where('MaDonDatHang', $order)
+                ->update([
+                    'TrangThai' => self::STATUS_RETURNING,
+                    'GhiChu' => $this->appendApprovalNote($order, 'Tạo phiếu đổi trả', $validated['MaTaiKhoan'], $validated['LoaiXuLy'] . ': ' . $validated['LyDo']),
+                ]);
+
+            $this->recordAudit(
+                $order,
+                'Tạo phiếu đổi trả',
+                $orderData->TrangThai,
+                self::STATUS_RETURNING,
+                $validated['MaTaiKhoan'],
+                $validated['LoaiXuLy'] . ': ' . $validated['LyDo']
+            );
+        });
 
         return redirect()
-            ->route('don-hang.show', $order)
-            ->with('success', 'Đã tạo phiếu đổi trả cho đơn hàng.');
+            ->route('don-hang.index')
+            ->with('success', 'Đã tạo phiếu đổi trả và chuyển đơn hàng sang trạng thái Đang đổi trả.');
     }
 
     public function stockForm(string $order): View
@@ -462,7 +476,7 @@ class PurchaseOrderController extends Controller
             ->where('MaDonDatHang', $order)
             ->whereIn('TrangThai', $this->statusCandidates([self::STATUS_PENDING]))
             ->update([
-                'TrangThai' => 'Chờ nhận hàng',
+                'TrangThai' => self::STATUS_WAITING_RECEIVE,
                 'GhiChu' => $this->appendApprovalNote($order, 'Phê duyệt', $request->MaTaiKhoan, $request->GhiChuDuyet),
             ]);
 
@@ -471,7 +485,7 @@ class PurchaseOrderController extends Controller
                 $order,
                 'Phê duyệt đơn',
                 $previousStatus,
-                'Chờ nhận hàng',
+                self::STATUS_WAITING_RECEIVE,
                 $request->MaTaiKhoan,
                 $request->GhiChuDuyet
             );
@@ -479,7 +493,7 @@ class PurchaseOrderController extends Controller
 
         return back()->with(
             $updated ? 'success' : 'warning',
-            $updated ? 'Đơn mua đã được phê duyệt và chuyển trạng thái thành Chờ nhận hàng.' : 'Chỉ phê duyệt được đơn đang chờ phê duyệt.'
+            $updated ? 'Đơn mua đã được phê duyệt và chuyển trạng thái thành Chờ xử lý.' : 'Chỉ phê duyệt được đơn đang chờ phê duyệt.'
         );
     }
 
@@ -562,7 +576,7 @@ class PurchaseOrderController extends Controller
 
         $updated = DB::table('DonDatHang')
             ->where('MaDonDatHang', $order)
-            ->whereIn('TrangThai', $this->statusCandidates([self::STATUS_APPROVED]))
+            ->whereIn('TrangThai', $this->statusCandidates([self::STATUS_WAITING_RECEIVE]))
             ->update([
                 'TrangThai' => self::STATUS_RECEIVED,
                 'GhiChu' => $this->appendApprovalNote($order, 'Nhận hàng', 'Hệ thống', null),
@@ -581,7 +595,7 @@ class PurchaseOrderController extends Controller
 
         return back()->with(
             $updated ? 'success' : 'warning',
-            $updated ? 'Đơn mua đã chuyển sang trạng thái Đã nhận hàng.' : 'Chỉ nhận hàng được đơn đã duyệt.'
+            $updated ? 'Đơn mua đã chuyển sang trạng thái Đã nhận hàng.' : 'Chỉ nhận hàng được đơn đang chờ xử lý.'
         );
     }
 
@@ -647,6 +661,8 @@ class PurchaseOrderController extends Controller
         $labels = [
             self::STATUS_PENDING => 'Chờ phê duyệt',
             self::STATUS_PROCESSING => 'Đang xử lý',
+            self::STATUS_WAITING_RECEIVE => 'Chờ xử lý',
+            self::STATUS_RETURNING => 'Đang đổi trả',
             self::STATUS_APPROVED => 'Đã duyệt',
             self::STATUS_REJECTED => 'Từ chối',
             self::STATUS_CANCELLED => 'Đã hủy',

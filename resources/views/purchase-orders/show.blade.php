@@ -11,6 +11,8 @@
     $statusClass = match ($order->TrangThai) {
         'Cho phe duyet' => 'pending',
         'Dang xu ly' => 'processing',
+        'Cho xu ly' => 'processing',
+        'Dang doi tra' => 'processing',
         'Da duyet' => 'approved',
         'Da nhan hang' => 'received',
         'Da nhap kho' => 'stocked',
@@ -22,8 +24,8 @@
     $canEdit = $isManagerUser && $order->TrangThai === 'Cho phe duyet';
     $canProcess = false;
     $canCancel = $isManagerUser && $order->TrangThai === 'Cho phe duyet';
-    $canReceive = $isManagerUser && $order->TrangThai === 'Da duyet';
     $canStock = $isManagerUser && $order->TrangThai === 'Da nhan hang';
+    $canReturn = $isManagerUser && $order->TrangThai === 'Cho xu ly';
     $totalReceived = collect($reconciliationItems)->sum('SoLuongNhan');
 @endphp
 
@@ -40,8 +42,10 @@
         @if (! $managerMode && $canEdit)
             <a class="btn btn-outline-primary" href="{{ route('purchase-orders.edit', $order->MaDonDatHang) }}">Sửa đơn</a>
         @endif
-        @if ($managerMode && $canStock)
+        @if ($managerMode && $order->TrangThai === 'Cho xu ly')
             <a class="btn btn-outline-danger" href="{{ route('don-hang.return.create', $order->MaDonDatHang) }}">Đổi trả</a>
+        @endif
+        @if ($managerMode && $order->TrangThai === 'Da nhan hang')
             <a class="btn btn-success" href="{{ route('don-hang.stock.create', $order->MaDonDatHang) }}">Nhập kho</a>
         @endif
     </div>
@@ -296,39 +300,5 @@
     </div>
 @endif
 
-<details class="card page-card mb-4">
-    <summary class="card-header bg-white fw-bold" style="cursor:pointer;">Truy vết thao tác</summary>
-    <div class="card-body px-4 pb-4">
-        @if ($auditTrail->isEmpty())
-            <p class="text-muted mb-0">Chưa có dữ liệu truy vết cho đơn mua này.</p>
-        @else
-            <div class="table-responsive">
-                <table class="table table-striped align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Thời gian</th>
-                            <th>Hành động</th>
-                            <th>Người thực hiện</th>
-                            <th>Từ trạng thái</th>
-                            <th>Sang trạng thái</th>
-                            <th>Nội dung</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($auditTrail as $trace)
-                            <tr>
-                                <td>{{ \Illuminate\Support\Carbon::parse($trace->created_at)->format('d/m/Y H:i:s') }}</td>
-                                <td class="fw-bold">{{ $trace->HanhDong }}</td>
-                                <td>{{ $trace->MaTaiKhoan ?: 'Hệ thống' }}</td>
-                                <td>{{ $trace->TrangThaiTruoc ? ($statusLabels[$trace->TrangThaiTruoc] ?? $trace->TrangThaiTruoc) : '-' }}</td>
-                                <td>{{ $trace->TrangThaiSau ? ($statusLabels[$trace->TrangThaiSau] ?? $trace->TrangThaiSau) : '-' }}</td>
-                                <td>{{ $trace->NoiDung ?: '-' }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        @endif
-    </div>
-</details>
+
 @endsection

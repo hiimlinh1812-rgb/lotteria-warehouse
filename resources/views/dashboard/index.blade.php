@@ -108,7 +108,7 @@
                             <div>
                                 <h5 class="fw-bold">Đơn hàng</h5>
                             </div>
-                            <div class="display-6 fw-bold">{{ $countChoDuyet ?? 0 }}</div>
+                            <div class="display-6 fw-bold">{{ $countDonHang ?? 0 }}</div>
                         </div>
                     </div>
                 </div>

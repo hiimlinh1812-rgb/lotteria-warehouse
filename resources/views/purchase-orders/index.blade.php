@@ -10,6 +10,8 @@
     $statusLabels = [
         'Cho phe duyet' => 'Chờ phê duyệt',
         'Dang xu ly' => 'Đang xử lý',
+        'Cho xu ly' => 'Chờ xử lý',
+        'Dang doi tra' => 'Đang đổi trả',
         'Da duyet' => 'Đã duyệt',
         'Tu choi' => 'Từ chối',
         'Da huy' => 'Đã hủy',
@@ -20,6 +22,8 @@
         return match ($status) {
             'Cho phe duyet' => 'pending',
             'Dang xu ly' => 'processing',
+            'Cho xu ly' => 'processing',
+            'Dang doi tra' => 'processing',
             'Da duyet' => 'approved',
             'Da nhan hang' => 'received',
             'Da nhap kho' => 'stocked',
@@ -59,7 +63,7 @@
 
 @if ($managerMode)
     <div class="row g-3 mb-4">
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="card page-card summary-tile h-100">
                 <div class="card-body">
                     <div class="text-muted fw-semibold">Chờ phê duyệt</div>
@@ -67,15 +71,23 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="card page-card summary-tile h-100">
                 <div class="card-body">
-                    <div class="text-muted fw-semibold">Đã nhận hàng</div>
-                    <div class="display-6 fw-bold text-primary">{{ $managerSummary['Da nhan hang'] ?? 0 }}</div>
+                    <div class="text-muted fw-semibold">Chờ xử lý</div>
+                    <div class="display-6 fw-bold text-primary">{{ $managerSummary['Cho xu ly'] ?? 0 }}</div>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
+            <div class="card page-card summary-tile h-100">
+                <div class="card-body">
+                    <div class="text-muted fw-semibold">Đã nhận hàng</div>
+                    <div class="display-6 fw-bold text-success">{{ $managerSummary['Da nhan hang'] ?? 0 }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
             <div class="card page-card summary-tile h-100">
                 <div class="card-body">
                     <div class="text-muted fw-semibold">Đã nhập kho</div>
@@ -175,10 +187,18 @@
                                                 <button class="btn btn-sm btn-outline-danger" type="submit">Hủy</button>
                                             </form>
                                         </div>
-                                    @elseif ($order->TrangThai === 'Da nhan hang')
+                                    @elseif ($order->TrangThai === 'Cho xu ly')
                                         <div class="d-inline-flex flex-wrap justify-content-end gap-2">
                                             <a class="btn btn-sm btn-outline-primary" href="{{ route('don-hang.show', $order->MaDonDatHang) }}">Xem</a>
                                             <a class="btn btn-sm btn-outline-danger" href="{{ route('don-hang.return.create', $order->MaDonDatHang) }}">Đổi trả</a>
+                                        </div>
+                                    @elseif ($order->TrangThai === 'Dang doi tra')
+                                        <div class="d-inline-flex flex-wrap justify-content-end gap-2">
+                                            <a class="btn btn-sm btn-outline-secondary" href="{{ route('don-hang.show', $order->MaDonDatHang) }}">Xem lịch sử/chi tiết</a>
+                                        </div>
+                                    @elseif ($order->TrangThai === 'Da nhan hang')
+                                        <div class="d-inline-flex flex-wrap justify-content-end gap-2">
+                                            <a class="btn btn-sm btn-outline-primary" href="{{ route('don-hang.show', $order->MaDonDatHang) }}">Xem</a>
                                             <a class="btn btn-sm btn-success" href="{{ route('don-hang.stock.create', $order->MaDonDatHang) }}">Nhập kho</a>
                                         </div>
                                     @elseif ($order->TrangThai === 'Da nhap kho')

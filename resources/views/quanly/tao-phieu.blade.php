@@ -1,100 +1,90 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <title>Tạo Phiếu Xuất Kho - Lotteria</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .header-title { color: #a52a2a; font-weight: bold; }
-        .bg-lotteria { background-color: #a52a2a; color: white; }
-        /* Style cho combobox thả xuống */
-        .search-dropdown {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            z-index: 1000;
-            display: none;
-            max-height: 250px;
-            overflow-y: auto;
-            border-radius: 0 0 0.375rem 0.375rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .search-item { cursor: pointer; }
-        .search-item:hover { background-color: #f8f9fa; }
-    </style>
-</head>
-<body class="bg-light">
+@extends('layouts.app')
 
-<div class="container mt-4">
-    @if($errors->any())
-        <div class="alert alert-danger">
-            <ul class="mb-0">
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
+@section('title', 'Tạo Phiếu Xuất Kho')
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div>
-            <h4 class="header-title">Tạo Phiếu Xuất Kho</h4>
-        </div>
-        <a href="{{ route('xuatkho.index') }}" class="btn btn-outline-secondary">Danh Sách Phiếu</a>
+@section('content')
+<style>
+    .header-title { color: #a52a2a; font-weight: bold; }
+    .search-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        z-index: 1000;
+        display: none;
+        max-height: 360px;
+        overflow-y: auto;
+        border-radius: 0 0 0.375rem 0.375rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .search-item { cursor: pointer; }
+    .search-item:hover { background-color: #f8f9fa; }
+    .search-help { color: #6c757d; font-size: 0.95rem; }
+</style>
+
+@php
+    $nguyenLieuCoTheXuat = $danhSachNguyenLieu->where('SoLuongTonKho', '>', 0)->values();
+@endphp
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="header-title mb-1">Tạo Phiếu Xuất Kho</h4>
     </div>
-
-    <div class="card mb-3 shadow-sm border-0">
-        <div class="card-body">
-            <div class="position-relative">
-                <input type="text" id="searchInput" class="form-control form-control-lg border-danger" 
-                       placeholder="Gõ tên nguyên liệu để tìm kiếm..." autocomplete="off">
-                
-                <div id="searchDropdown" class="list-group search-dropdown w-100"></div>
-            </div>
-        </div>
-    </div>
-
-    <form action="{{ route('xuatkho.store') }}" method="POST">
-        @csrf 
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-lotteria d-flex justify-content-between align-items-center">
-                <h6 class="mb-0">Danh Sách Nguyên Liệu Chờ Xuất</h6>
-                <span class="badge bg-warning text-dark" id="countBadge">0 đã chọn</span>
-            </div>
-            
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0" id="selectedTable">
-                    <thead class="table-light text-danger">
-                        <tr>
-                            <th>MÃ NL</th>
-                            <th>TÊN NGUYÊN LIỆU</th>
-                            <th>NHÓM HÀNG</th>
-                            <th>TỒN KHO</th>
-                            <th width="150">SỐ LƯỢNG XUẤT</th>
-                            <th width="80" class="text-center">XÓA</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody">
-                        <tr id="emptyRow">
-                            <td colspan="6" class="text-center py-5 text-muted">
-                                <p class="mb-0">Chưa có nguyên liệu nào được chọn.</p>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            
-            <div class="card-footer bg-white text-end py-3">
-                <button type="button" class="btn btn-outline-secondary me-2" onclick="location.reload()">Làm Mới Trang</button>
-                <button type="submit" class="btn btn-danger" style="background-color: #a52a2a;">Xác Nhận Xuất Kho</button>
-            </div>
-        </div>
-    </form>
+    <a href="{{ route('xuatkho.index') }}" class="btn btn-outline-secondary">Danh Sách Phiếu</a>
 </div>
 
+<div class="card page-card mb-3">
+    <div class="card-body">
+        <label for="searchInput" class="form-label fw-semibold text-muted">Chọn nguyên liệu</label>
+        <div class="position-relative">
+            <input type="text" id="searchInput" class="form-control form-control-lg border-danger"
+                   placeholder="Bấm vào đây để xem toàn bộ nguyên liệu hoặc nhập tên/mã để lọc..." autocomplete="off">
+            <div id="searchDropdown" class="list-group search-dropdown w-100"></div>
+        </div>
+        <div class="search-help mt-2">
+            Hiện có {{ $nguyenLieuCoTheXuat->count() }} nguyên liệu còn tồn kho trong cơ sở dữ liệu và sẵn sàng để xuất.
+        </div>
+    </div>
+</div>
+
+<form action="{{ route('xuatkho.store') }}" method="POST">
+    @csrf
+    <div class="card page-card">
+        <div class="card-header bg-lotteria d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">Danh Sách Nguyên Liệu Chờ Xuất</h6>
+            <span class="badge bg-warning text-dark" id="countBadge">0 đã chọn</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="selectedTable">
+                <thead class="table-light text-danger">
+                    <tr>
+                        <th>MÃ NL</th>
+                        <th>TÊN NGUYÊN LIỆU</th>
+                        <th>NHÓM HÀNG</th>
+                        <th>TỒN KHO</th>
+                        <th width="150">SỐ LƯỢNG XUẤT</th>
+                        <th width="80" class="text-center">XÓA</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr id="emptyRow">
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <p class="mb-0">Chưa có nguyên liệu nào được chọn.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card-footer bg-white text-end py-3">
+            <button type="button" class="btn btn-outline-secondary me-2" onclick="location.reload()">Làm Mới Trang</button>
+            <button type="submit" class="btn btn-danger" style="background-color: #a52a2a;">Xác Nhận Xuất Kho</button>
+        </div>
+    </div>
+</form>
+
 <script>
-    // Dữ liệu toàn bộ nguyên liệu (chỉ lấy hàng còn tồn kho để xuất)
-    const nguyenLieus = @json($danhSachNguyenLieu->where('SoLuongTonKho', '>', 0)->values());
+    const nguyenLieus = @json($nguyenLieuCoTheXuat);
 </script>
 
 <script>
@@ -104,70 +94,75 @@
         const tableBody = document.getElementById('tableBody');
         const emptyRow = document.getElementById('emptyRow');
         const countBadge = document.getElementById('countBadge');
-        
-        let selectedItems = new Set(); // Dùng Set để theo dõi các mã NL đã chọn (tránh trùng lặp)
 
-        // 1. Xử lý khi gõ vào ô tìm kiếm
-        searchInput.addEventListener('input', function() {
-            const keyword = this.value.toLowerCase().trim();
-            searchDropdown.innerHTML = ''; // Xóa list cũ
-            
-            if (keyword.length === 0) {
+        let selectedItems = new Set();
+
+        function renderDropdown(showAll = false) {
+            const keyword = searchInput.value.toLowerCase().trim();
+            searchDropdown.innerHTML = '';
+
+            if (!showAll && keyword.length === 0) {
                 searchDropdown.style.display = 'none';
                 return;
             }
 
-            // Lọc danh sách nguyên liệu theo từ khóa
-            const filtered = nguyenLieus.filter(nl => 
-                nl.TenNguyenLieu.toLowerCase().includes(keyword) || 
-                nl.MaNguyenLieu.toLowerCase().includes(keyword)
-            );
+            const filtered = nguyenLieus.filter(nl => {
+                if (selectedItems.has(nl.MaNguyenLieu)) {
+                    return false;
+                }
 
-            if (filtered.length > 0) {
-                filtered.forEach(nl => {
-                    const item = document.createElement('a');
-                    item.className = 'list-group-item list-group-item-action search-item d-flex justify-content-between align-items-center';
-                    item.innerHTML = `
-                        <div><strong>${nl.TenNguyenLieu}</strong> <small class="text-muted">(${nl.MaNguyenLieu})</small></div>
-                        <span class="badge bg-primary rounded-pill">Tồn: ${nl.SoLuongTonKho} ${nl.DonViTinh}</span>
-                    `;
-                    
-                    // Xử lý sự kiện click vào 1 nguyên liệu trong combobox
-                    item.addEventListener('click', function() {
-                        addIngredientToTable(nl);
-                        searchInput.value = ''; // Xóa ô tìm kiếm
-                        searchDropdown.style.display = 'none'; // Ẩn combobox
-                        searchInput.focus();
-                    });
-                    
-                    searchDropdown.appendChild(item);
+                if (showAll && keyword.length === 0) {
+                    return true;
+                }
+
+                return nl.TenNguyenLieu.toLowerCase().includes(keyword) ||
+                    nl.MaNguyenLieu.toLowerCase().includes(keyword);
+            });
+
+            if (filtered.length === 0) {
+                const message = selectedItems.size === nguyenLieus.length
+                    ? 'Bạn đã chọn hết nguyên liệu có thể xuất.'
+                    : 'Không tìm thấy nguyên liệu chưa chọn...';
+                searchDropdown.innerHTML = `<div class="list-group-item text-muted">${message}</div>`;
+                searchDropdown.style.display = 'block';
+                return;
+            }
+
+            filtered.forEach(nl => {
+                const item = document.createElement('a');
+                item.className = 'list-group-item list-group-item-action search-item d-flex justify-content-between align-items-center';
+                item.innerHTML = `
+                    <div>
+                        <strong>${nl.TenNguyenLieu}</strong>
+                        <small class="text-muted">(${nl.MaNguyenLieu})</small>
+                        <div class="small text-muted">${nl.NhomHang || ''}</div>
+                    </div>
+                    <span class="badge bg-primary rounded-pill">Tồn: ${nl.SoLuongTonKho} ${nl.DonViTinh}</span>
+                `;
+
+                item.addEventListener('click', function() {
+                    addIngredientToTable(nl);
+                    searchInput.value = '';
+                    renderDropdown(true);
+                    searchInput.focus();
                 });
-                searchDropdown.style.display = 'block';
-            } else {
-                searchDropdown.innerHTML = '<div class="list-group-item text-muted">Không tìm thấy nguyên liệu...</div>';
-                searchDropdown.style.display = 'block';
-            }
-        });
 
-        // Ẩn combobox khi click ra ngoài
-        document.addEventListener('click', function(e) {
-            if (!searchInput.contains(e.target) && !searchDropdown.contains(e.target)) {
-                searchDropdown.style.display = 'none';
-            }
-        });
+                searchDropdown.appendChild(item);
+            });
 
-        // 2. Hàm chèn nguyên liệu xuống DataGridView (Bảng)
+            searchDropdown.style.display = 'block';
+        }
+
         function addIngredientToTable(nl) {
-            // Kiểm tra xem đã thêm chưa
             if (selectedItems.has(nl.MaNguyenLieu)) {
                 alert('Nguyên liệu này đã có trong danh sách!');
                 return;
             }
 
-            // Ẩn dòng "Chưa có nguyên liệu nào"
-            if (emptyRow) emptyRow.style.display = 'none';
+            if (emptyRow) {
+                emptyRow.style.display = 'none';
+            }
 
-            // Tạo thẻ <tr> mới
             const tr = document.createElement('tr');
             tr.id = `row-${nl.MaNguyenLieu}`;
             tr.innerHTML = `
@@ -176,8 +171,8 @@
                 <td>${nl.NhomHang}</td>
                 <td class="text-primary fw-bold">${nl.SoLuongTonKho} ${nl.DonViTinh}</td>
                 <td>
-                    <input type="number" name="nguyen_lieu[${nl.MaNguyenLieu}]" 
-                           class="form-control form-control-sm text-center" 
+                    <input type="number" name="nguyen_lieu[${nl.MaNguyenLieu}]"
+                           class="form-control form-control-sm text-center"
                            min="1" max="${nl.SoLuongTonKho}" value="1" required>
                 </td>
                 <td class="text-center">
@@ -188,35 +183,54 @@
             `;
 
             tableBody.appendChild(tr);
-            selectedItems.add(nl.MaNguyenLieu); // Đánh dấu là đã chọn
+            selectedItems.add(nl.MaNguyenLieu);
             updateBadge();
         }
 
-        // 3. Xử lý sự kiện bấm nút Xóa trên bảng (Dùng Event Delegation)
         tableBody.addEventListener('click', function(e) {
-            if (e.target.classList.contains('btn-delete')) {
-                const maNL = e.target.getAttribute('data-id');
-                const row = document.getElementById(`row-${maNL}`);
-                
-                if (row) {
-                    row.remove(); // Xóa thẻ <tr> khỏi giao diện
-                    selectedItems.delete(maNL); // Xóa khỏi danh sách theo dõi
-                    updateBadge();
+            if (!e.target.classList.contains('btn-delete')) {
+                return;
+            }
 
-                    // Nếu xóa hết thì hiện lại dòng trống
-                    if (selectedItems.size === 0 && emptyRow) {
-                        emptyRow.style.display = 'table-row';
-                    }
+            const maNL = e.target.getAttribute('data-id');
+            const row = document.getElementById(`row-${maNL}`);
+
+            if (row) {
+                row.remove();
+                selectedItems.delete(maNL);
+                updateBadge();
+
+                if (selectedItems.size === 0 && emptyRow) {
+                    emptyRow.style.display = 'table-row';
+                }
+
+                if (document.activeElement === searchInput || searchDropdown.style.display === 'block') {
+                    renderDropdown(true);
                 }
             }
         });
 
-        // Hàm cập nhật số lượng đã chọn
         function updateBadge() {
-            countBadge.textContent = selectedItems.size + ' đã chọn';
+            countBadge.textContent = `${selectedItems.size} đã chọn`;
         }
+
+        searchInput.addEventListener('focus', function() {
+            renderDropdown(true);
+        });
+
+        searchInput.addEventListener('click', function() {
+            renderDropdown(true);
+        });
+
+        searchInput.addEventListener('input', function() {
+            renderDropdown(false);
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !searchDropdown.contains(e.target)) {
+                searchDropdown.style.display = 'none';
+            }
+        });
     });
 </script>
-
-</body>
-</html>
+@endsection
