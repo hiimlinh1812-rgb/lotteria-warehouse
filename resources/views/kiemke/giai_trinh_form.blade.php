@@ -13,7 +13,7 @@
 
                     @if ($errors->any())
                         <div class="alert alert-warning border-start border-4 border-warning shadow-sm mb-4">
-                            <h6 class="fw-bold text-dark mb-2">⚠️ Luồng phụ 1: Thông tin nhập không đầy đủ, hệ thống yêu cầu nhập lại:</h6>
+                            <h6 class="fw-bold text-dark mb-2">⚠️ Thông tin nhập không đầy đủ, hệ thống yêu cầu nhập lại:</h6>
                             <ul class="mb-0 small text-danger fw-bold">
                                 @foreach ($errors->all() as $error)
                                     <li>{{ $error }}</li>
@@ -55,12 +55,12 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-bold text-dark">2. Nguyên nhân thất thoát khách quan/chủ quan:</label>
+                            <label class="form-label fw-bold text-dark">2. Nguyên nhân thất thoát:</label>
                             <textarea name="nguyen_nhan" rows="3" class="form-control" placeholder="Ví dụ: Do thiết bị đo nhiệt độ tủ đông kho chính gặp sự cố trong đêm làm một số lượng nguyên liệu bị hỏng rã đông buộc phải hủy bỏ..." required>{{ old('nguyen_nhan') }}</textarea>
                         </div>
 
                         <div class="mb-4">
-                            <label class="form-label fw-bold text-dark">3. Bằng chứng liên quan kèm theo (Mã biên bản vật lý / Link hình ảnh):</label>
+                            <label class="form-label fw-bold text-dark">3. Bằng chứng liên quan kèm theo:</label>
                             <input type="text" name="bang_chung" class="form-control" placeholder="Ví dụ: BB-HUY-LH004 / Ảnh đính kèm camera khu vực sơ chế ca tối" value="{{ old('bang_chung') }}" required>
                         </div>
 

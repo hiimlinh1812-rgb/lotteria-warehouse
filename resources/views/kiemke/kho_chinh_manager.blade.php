@@ -52,9 +52,10 @@
                 </tbody>
             </table>
 
+            <!-- ĐÃ FIX: Chuyển đổi class để không bao giờ bị JavaScript tự động ẩn xóa mất -->
             @if($phiu['GiaiTrinh'])
                 <div class="p-3 bg-light border-top">
-                    <div class="alert alert-info mb-0 py-2 small shadow-sm">
+                    <div class="bg-info-subtle text-dark border-start border-4 border-info p-3 mb-0 small shadow-sm rounded-end">
                         📌 <strong>Hồ sơ giải trình đính kèm:</strong> 
                         <span class="fw-bold text-dark">{{ $phiu['GiaiTrinh']->NoiDung }}</span> | Nguyên nhân: <span class="text-danger fw-bold">{{ $phiu['GiaiTrinh']->NguyenNhan }}</span>
                     </div>
@@ -91,16 +92,18 @@
     </div>
 @endforelse
 
+<!-- SCRIPT TỰ ĐỘNG ẨN FLASH ALERT (CHỈ XÓA THÔNG BÁO HỆ THỐNG, KHÔNG XÓA DỮ LIỆU) -->
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         setTimeout(function() {
-            let alerts = document.querySelectorAll('.alert');
-            alerts.forEach(function(alert) {
+            // Chỉ quét các alert thông báo hệ thống nếu có xuất hiện ngoài card dữ liệu
+            let systemAlerts = document.querySelectorAll('.alert-dismissible, .session-alert');
+            systemAlerts.forEach(function(alert) {
                 alert.style.transition = "opacity 0.5s ease-out";
                 alert.style.opacity = "0";
                 setTimeout(() => alert.remove(), 500);
             });
-        }, 30000); // 30000ms = Đóng thông báo sau 30 giây
+        }, 30000); 
     });
 </script>
 @endsection
