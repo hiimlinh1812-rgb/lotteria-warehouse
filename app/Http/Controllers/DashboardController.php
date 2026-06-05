@@ -1,14 +1,43 @@
 <?php
+
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
     public function index(): View
     {
-        return view('dashboard.index');
+        $countChoDuyet = 0;
+        $countThongKe = 0;
+
+        if (Schema::hasTable('PhieuKiemKe')) {
+            $countChoDuyet = DB::table('PhieuKiemKe')
+                ->where('LoaiKiemKe', 'Định kỳ')
+                ->where('TrangThai', 'Chờ duyệt')
+                ->count();
+
+            $countThongKe = DB::table('PhieuKiemKe')
+                ->where('LoaiKiemKe', 'Định kỳ')
+                ->where('TrangThai', 'Đã duyệt')
+                ->count();
+        }
+
+        $countXuatHuy = 0;
+        if (Schema::hasTable('XuatHuy')) {
+            $countXuatHuy = DB::table('XuatHuy')->count();
+        } elseif (Schema::hasTable('PhieuXuatHuy')) {
+            $countXuatHuy = DB::table('PhieuXuatHuy')->count();
+        }
+
+        $countGiaiTrinh = 0;
+        if (Schema::hasTable('PhieuGiaiTrinh')) {
+            $countGiaiTrinh = DB::table('PhieuGiaiTrinh')->count();
+        }
+
+        return view('dashboard.index', compact('countChoDuyet', 'countXuatHuy', 'countThongKe', 'countGiaiTrinh'));
     }
 
     public function module(string $module): View

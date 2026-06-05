@@ -11,8 +11,17 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'role' => \App\Http\Middleware\CheckVaiTro::class,
+        ]);
+
+        $middleware->validateCsrfTokens(except: [
+            'login',
+            'kiem-ke-bep/store',
+            'kho-chinh/kiem-ke/store',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
-    })->create();
+    })
+    ->create();

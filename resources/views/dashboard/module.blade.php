@@ -28,9 +28,9 @@
                     <a class="btn btn-outline-secondary text-start" href="{{ route('dashboard') }}">Dashboard</a>
                     <a class="btn btn-outline-secondary text-start" href="{{ route('don-hang.index') }}">Đơn hàng</a>
                     <a class="btn btn-outline-secondary text-start" href="{{ route('xuatkho.index') }}">Xuất kho</a>
-                    <a class="btn btn-outline-secondary text-start" href="{{ route('xuathuy.index') }}">Xuất hủy</a>
-                    <a class="btn btn-outline-secondary text-start" href="{{ route('kiemke.index') }}">Kiểm kê</a>
-                    <a class="btn btn-outline-secondary text-start" href="{{ route('giaitrinh.index') }}">Giải trình</a>
+                    <a class="btn btn-outline-secondary text-start" href="{{ route('xuat-huy.index') }}">Xuất hủy</a>
+                    <a class="btn btn-outline-secondary text-start" href="{{ route('kiem-ke.index') }}">Kiểm kê</a>
+                    <a class="btn btn-outline-secondary text-start" href="{{ route('giai-trinh.index') }}">Giải trình</a>
                 </div>
             </div>
         </div>
