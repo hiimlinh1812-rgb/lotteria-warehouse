@@ -18,13 +18,6 @@
     <div>
         <h2 class="text-lotteria fw-bold mb-1">Phiếu xuất hủy</h2>
     </div>
-    <div class="d-flex flex-wrap gap-2">
-        <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary">Về dashboard</a>
-        @unless($isStoreChief)
-            <a href="{{ route('kiem-ke.index') }}" class="btn btn-outline-secondary">Sang kiểm kê</a>
-            <a href="{{ route('giai-trinh.index') }}" class="btn btn-outline-secondary">Sang giải trình</a>
-        @endunless
-    </div>
 </div>
 
 <div class="row g-4 mb-4">
@@ -62,38 +55,6 @@
     </div>
 </div>
 
-@unless($isStoreChief)
-    <div class="row g-4 mb-4">
-        <div class="col-lg-4">
-            <a href="{{ route('kiem-ke.index') }}" class="text-decoration-none">
-                <div class="card page-card h-100">
-                    <div class="card-body">
-                        <h5 class="fw-bold text-lotteria">Liên kết kiểm kê</h5>
-                    </div>
-                </div>
-            </a>
-        </div>
-        <div class="col-lg-4">
-            <a href="{{ route('giai-trinh.index') }}" class="text-decoration-none">
-                <div class="card page-card h-100">
-                    <div class="card-body">
-                        <h5 class="fw-bold text-lotteria">Liên kết giải trình</h5>
-                    </div>
-                </div>
-            </a>
-        </div>
-        <div class="col-lg-4">
-            <a href="{{ route('dashboard') }}" class="text-decoration-none">
-                <div class="card page-card h-100">
-                    <div class="card-body">
-                        <h5 class="fw-bold text-lotteria">Quay về tổng quan</h5>
-                    </div>
-                </div>
-            </a>
-        </div>
-    </div>
-@endunless
-
 <div class="card page-card">
     <div class="card-header bg-white border-0 pb-0">
         <h5 class="fw-bold mb-1">Danh sách phiếu xuất hủy</h5>
@@ -108,7 +69,7 @@
                         <th>Người tạo</th>
                         <th>Phiếu kiểm kê</th>
                         <th>Loại kiểm kê</th>
-                        <th>Số dòng NL</th>
+                        <th>Số NL</th>
                         <th>Tổng SL hủy</th>
                         <th>Trạng thái</th>
                         <th>Lý do hủy</th>

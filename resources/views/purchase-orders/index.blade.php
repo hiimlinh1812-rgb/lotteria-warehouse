@@ -57,13 +57,6 @@
     @endif
 </div>
 
-@if ($isStoreChiefUser)
-    <div class="alert alert-light border border-start border-4 border-warning shadow-sm mb-4" role="alert">
-        <div class="fw-bold text-lotteria mb-1">Quyền của Cửa hàng trưởng</div>
-        <div class="small text-muted">Bạn chỉ phê duyệt hoặc từ chối các đơn đang chờ phê duyệt. Các thao tác tạo đơn, sửa đơn, hủy đơn và nhập kho thuộc về Quản lý.</div>
-    </div>
-@endif
-
 @if ($managerMode)
     <div class="row g-3 mb-4">
         <div class="col-md-4">

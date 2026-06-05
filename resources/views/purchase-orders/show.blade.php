@@ -94,7 +94,6 @@
         <div class="card page-card">
             <div class="card-header bg-white border-0 pt-4 px-4">
                 <h5 class="mb-1 fw-bold">Chi tiết nguyên liệu</h5>
-                <p class="text-muted mb-0">Danh sách nguyên liệu của đơn hàng và số lượng đã đặt.</p>
             </div>
             <div class="card-body px-4 pb-4">
                 <div class="table-responsive">
@@ -166,7 +165,6 @@
     <div class="card page-card mb-4">
         <div class="card-header bg-white border-0 pt-4 px-4">
             <h5 class="mb-1 fw-bold">Kiểm tra kết quả đối soát</h5>
-            <p class="text-muted mb-0">Hệ thống tự động so sánh giữa số lượng đặt và số lượng nhân viên thực nhận theo phiếu nhận hàng.</p>
         </div>
         <div class="card-body px-4 pb-4">
             <div class="table-responsive">
@@ -248,20 +246,14 @@
     <div class="card page-card mb-4">
         <div class="card-header bg-white border-0 pt-4 px-4">
             <h5 class="mb-1 fw-bold">Phê duyệt đơn mua</h5>
-            <p class="text-muted mb-0">Cửa hàng trưởng xem chi tiết đơn hàng rồi phê duyệt hoặc từ chối ngay tại màn này.</p>
         </div>
         <div class="card-body px-4 pb-4">
             @if ($canApprove)
-                <div class="rounded-4 border border-warning-subtle bg-warning bg-opacity-10 px-3 py-3 mb-4">
-                    <div class="fw-bold text-lotteria mb-1">Lưu ý quyền thao tác</div>
-                    <div class="small text-muted">Chỉ tài khoản có vai trò Cửa hàng trưởng mới được gửi quyết định phê duyệt hoặc từ chối. Sau khi duyệt xong, đơn sẽ quay lại cho Quản lý xử lý nhận hàng.</div>
-                </div>
                 <div class="row g-4">
                     <div class="col-lg-6">
                         <form method="post" action="{{ route('purchase-orders.approve', $order->MaDonDatHang) }}" class="border border-success-subtle rounded-4 p-3 h-100 bg-success bg-opacity-10">
                             @csrf
                             <h6 class="fw-bold">Phê duyệt đơn</h6>
-                            <p class="small text-muted">Xác nhận đơn hợp lệ để chuyển sang bước nhận hàng.</p>
                             <div class="mb-3">
                                 <label for="approve-account" class="form-label fw-semibold">Cửa hàng trưởng</label>
                                 <input id="approve-account" class="form-control" value="{{ ($currentUser->MaTaiKhoan ?? '') . ' - ' . ($currentUser->HoTen ?? '') }}" readonly>
@@ -278,7 +270,6 @@
                         <form method="post" action="{{ route('purchase-orders.reject', $order->MaDonDatHang) }}" class="border border-danger-subtle rounded-4 p-3 h-100 bg-danger bg-opacity-10">
                             @csrf
                             <h6 class="fw-bold">Từ chối đơn</h6>
-                            <p class="small text-muted">Ghi rõ lý do để quản lý chỉnh sửa hoặc tạo lại đơn cho đúng nhu cầu.</p>
                             <div class="mb-3">
                                 <label for="reject-account" class="form-label fw-semibold">Cửa hàng trưởng</label>
                                 <input id="reject-account" class="form-control" value="{{ ($currentUser->MaTaiKhoan ?? '') . ' - ' . ($currentUser->HoTen ?? '') }}" readonly>
@@ -293,7 +284,7 @@
                     </div>
                 </div>
             @else
-                <div class="text-muted">Đơn mua này đang ở trạng thái {{ $statusLabels[$order->TrangThai] ?? $order->TrangThai }}, Cửa hàng trưởng chỉ cần theo dõi lịch sử xử lý.</div>
+                <div class="text-muted">Đơn mua này đang ở trạng thái {{ $statusLabels[$order->TrangThai] ?? $order->TrangThai }}.</div>
             @endif
         </div>
     </div>
@@ -308,8 +299,6 @@
 <details class="card page-card mb-4">
     <summary class="card-header bg-white fw-bold" style="cursor:pointer;">Truy vết thao tác</summary>
     <div class="card-body px-4 pb-4">
-        <p class="text-muted">Phần này được ẩn mặc định, mở ra để xem lịch sử thao tác trên đơn mua.</p>
-
         @if ($auditTrail->isEmpty())
             <p class="text-muted mb-0">Chưa có dữ liệu truy vết cho đơn mua này.</p>
         @else

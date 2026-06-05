@@ -10,8 +10,8 @@
     @forelse($lichSuThongKe as $thongKe)
         <div class="card shadow border-0 mb-5">
             <div class="card-header bg-success text-white d-flex justify-content-between align-items-center py-3">
-                <span class="fw-bold">Mã Biên Bản Chốt: <strong class="text-warning font-monospace">{{ $thongKe['MaPhieuKiemKe'] }}</strong></span>
-                <span class="badge bg-white text-success fw-bold text-uppercase">Ngày kiểm ca: {{ \Carbon\Carbon::parse($thongKe['NgayKiemKe'])->format('d/m/Y') }}</span>
+                <span class="fw-bold">Mã Phiếu Kiểm Kê: <strong class="text-warning font-monospace">{{ $thongKe['MaPhieuKiemKe'] }}</strong></span>
+                <span class="badge bg-white text-success fw-bold text-uppercase">Ngày kiểm: {{ \Carbon\Carbon::parse($thongKe['NgayKiemKe'])->format('d/m/Y') }}</span>
             </div>
             <div class="card-body p-0">
                 <table class="table table-bordered text-center align-middle mb-0 table-striped">
@@ -59,7 +59,6 @@
         <div class="card shadow border-0 p-5 text-center my-4 bg-white">
             <div class="text-center mb-3"><span class="fs-1">📊</span></div>
             <h5 class="fw-bold text-secondary">Hệ thống chưa ghi nhận bất kỳ phiếu kiểm kê định kỳ nào ở trạng thái "Đã duyệt"!</h5>
-            <p class="text-muted small mb-0">Số liệu thống kê sẽ tự động cập nhật hiển thị tại đây sau khi có phiếu đối soát được duyệt chốt.</p>
         </div>
     @endforelse
 </div>

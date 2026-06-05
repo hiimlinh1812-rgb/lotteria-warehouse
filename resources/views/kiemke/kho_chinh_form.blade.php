@@ -3,7 +3,7 @@
 @section('content')
 <div class="card shadow border-0">
     <div class="card-header bg-danger text-white text-center py-3">
-        <h3 class="mb-0 fw-bold">🏛️ LOTTERIA BÀ TRIỆU - KIỂM KÊ ĐỊNH KỲ</h3>
+        <h3 class="mb-0 fw-bold">LOTTERIA BÀ TRIỆU - KIỂM KÊ ĐỊNH KỲ</h3>
     </div>
     <div class="card-body">
         <form action="{{ route('khochinh.kiemke.store') }}" method="POST">

@@ -13,7 +13,6 @@
                 </svg>
                 Danh Sách Phiếu Xuất Kho
             </h3>
-            <p class="text-muted mb-0">Quản lý các phiếu xuất kho đầu ngày cho khu vực bếp</p>
         </div>
         
         <div>

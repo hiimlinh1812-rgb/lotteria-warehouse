@@ -31,7 +31,7 @@
                             </svg>
                         </div>
                         <div class="display-4 fw-bold mb-2">{{ $countDonHangChoDuyet ?? 0 }}</div>
-                        <p class="mb-0 opacity-90">Các đơn hàng đang chờ phê duyệt</p>
+                        
                     </div>
                 </div>
             </a>
@@ -50,7 +50,7 @@
                             </svg>
                         </div>
                         <div class="display-4 fw-bold mb-2">{{ $countPhieuXuatHuy ?? 0 }}</div>
-                        <p class="mb-0 opacity-90">Tổng số phiếu xuất hủy trong hệ thống</p>
+                        
                     </div>
                 </div>
             </a>
@@ -68,7 +68,7 @@
                             </svg>
                         </div>
                         <div class="display-4 fw-bold mb-2">{{ $countPhieuThongKeTonKho ?? 0 }}</div>
-                        <p class="mb-0 opacity-90">Các phiếu kiểm kê và thống kê tồn kho</p>
+                        
                     </div>
                 </div>
             </a>
@@ -87,7 +87,7 @@
                             </svg>
                         </div>
                         <div class="display-4 fw-bold mb-2">{{ $countPhieuGiaiTrinh ?? 0 }}</div>
-                        <p class="mb-0 opacity-90">Các phiếu giải trình về thất thoát, chênh lệch</p>
+                        
                     </div>
                 </div>
             </a>
@@ -96,7 +96,7 @@
 @elseif ($isManager)
     <!-- Dashboard Quản lý -->
     <div class="mb-4">
-        <h2 class="text-lotteria fw-bold mb-1">Bảng điều hướng nghiệp vụ</h2>
+        <h2 class="text-lotteria fw-bold mb-1">Bảng điều hướng</h2>
     </div>
 
     <div class="row g-4">
@@ -107,11 +107,9 @@
                         <div class="d-flex justify-content-between align-items-start gap-3">
                             <div>
                                 <h5 class="fw-bold">Đơn hàng</h5>
-                                <p class="mb-2">Tạo đơn đặt hàng, theo dõi chờ phê duyệt, đã nhận hàng và nhập kho.</p>
                             </div>
                             <div class="display-6 fw-bold">{{ $countChoDuyet ?? 0 }}</div>
                         </div>
-                        <h3 class="mb-0 mt-3">Mở phân hệ</h3>
                     </div>
                 </div>
             </a>
@@ -121,9 +119,12 @@
             <a href="{{ route('xuatkho.index') }}" class="text-decoration-none d-block">
                 <div class="card bg-danger text-white h-100 page-card">
                     <div class="card-body">
-                        <h5 class="fw-bold">Xuất kho</h5>
-                        <p class="mb-2">Theo dõi phiếu xuất và tiến độ cấp phát nguyên liệu cho các bộ phận.</p>
-                        <h3 class="mb-0 mt-3">Mở phân hệ</h3>
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+                            <div>
+                                <h5 class="fw-bold">Xuất kho</h5>
+                            </div>
+                            <div class="display-6 fw-bold">{{ $countXuatKho ?? 0 }}</div>
+                        </div>
                     </div>
                 </div>
             </a>
@@ -136,11 +137,9 @@
                         <div class="d-flex justify-content-between align-items-start gap-3">
                             <div>
                                 <h5 class="fw-bold">Xuất hủy</h5>
-                                <p class="mb-2">Quản lý hàng hủy, hàng lỗi, hàng quá hạn cần loại bỏ khỏi kho.</p>
                             </div>
                             <div class="display-6 fw-bold">{{ $countXuatHuy ?? 0 }}</div>
                         </div>
-                        <h3 class="mb-0 mt-3">Mở phân hệ</h3>
                     </div>
                 </div>
             </a>
@@ -153,11 +152,9 @@
                         <div class="d-flex justify-content-between align-items-start gap-3">
                             <div>
                                 <h5 class="fw-bold">Kiểm kê</h5>
-                                <p class="mb-2">Đối chiếu số liệu tồn kho thực tế và hệ thống, ghi nhận chênh lệch.</p>
                             </div>
                             <div class="display-6 fw-bold">{{ $countThongKe ?? 0 }}</div>
                         </div>
-                        <h3 class="mb-0 mt-3">Mở phân hệ</h3>
                     </div>
                 </div>
             </a>
@@ -170,7 +167,6 @@
                         <div class="d-flex justify-content-between align-items-start gap-3">
                             <div>
                                 <h5 class="fw-bold text-lotteria">Giải trình</h5>
-                                <p class="mb-0 text-dark">Tập trung các phiếu giải trình liên quan đến thất thoát, chênh lệch và các phát sinh trong kho.</p>
                             </div>
                             <div class="display-6 fw-bold text-lotteria">{{ $countGiaiTrinh ?? 0 }}</div>
                         </div>

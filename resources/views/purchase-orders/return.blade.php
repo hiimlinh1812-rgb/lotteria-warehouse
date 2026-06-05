@@ -28,7 +28,6 @@
             @csrf
             <div class="card-header bg-white border-0 pt-4 px-4">
                 <h5 class="mb-1 fw-bold">Thông tin phiếu đổi trả</h5>
-                <p class="text-muted mb-0">Khai báo lý do và loại xử lý để gửi tiếp cho form nghiệp vụ.</p>
             </div>
             <div class="card-body px-4 pb-4">
                 <div class="row g-3">

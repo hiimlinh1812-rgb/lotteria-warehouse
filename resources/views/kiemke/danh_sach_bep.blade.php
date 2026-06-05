@@ -273,10 +273,10 @@
                                         type="text"
                                         name="ghi_chu_tu_choi"
                                         class="form-control review-note"
-                                        placeholder="Bắt buộc nhập ghi chú lý do chênh lệch vật lý trước khi bấm từ chối..."
+                                        placeholder="Bắt buộc nhập ghi chú lý do chênh lệch trước khi bấm từ chối..."
                                         required
                                     >
-                                    <button type="submit" class="btn btn-outline-danger px-4">Từ chối &amp; Trả về nhập</button>
+                                    <button type="submit" class="btn btn-outline-danger px-4">Từ chối</button>
                                 </div>
                             </form>
 
@@ -293,7 +293,7 @@
                         </div>
 
                         @unless($phieu['isFullyMatched'])
-                            <div class="review-lock-msg">Hệ thống đã tự động khóa chốt ca do phát hiện chênh lệch vật lý.</div>
+                            <div class="review-lock-msg">Hệ thống đã tự động khóa chốt ca do phát hiện chênh lệch.</div>
                         @endunless
                     @elseif($phieu['TrangThai'] === 'Từ chối')
                         <div class="text-danger fw-semibold">Báo cáo đã bị từ chối và đang chờ nhân viên hiệu chỉnh lại.</div>

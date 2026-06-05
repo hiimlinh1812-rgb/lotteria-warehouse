@@ -39,7 +39,6 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
             <h4 class="header-title">Tạo Phiếu Xuất Kho</h4>
-            <small class="text-muted">Tìm kiếm và chọn nguyên liệu để thêm vào danh sách xuất</small>
         </div>
         <a href="{{ route('xuatkho.index') }}" class="btn btn-outline-secondary">Danh Sách Phiếu</a>
     </div>

@@ -24,7 +24,6 @@
     <div class="card page-card mb-4">
         <div class="card-header bg-white border-0 pt-4 px-4">
             <h5 class="mb-1 fw-bold">Thông tin đơn hàng</h5>
-            <p class="text-muted mb-0">Khai báo người lập đơn, ngày đặt và ghi chú nghiệp vụ.</p>
         </div>
         <div class="card-body px-4 pb-4">
             <div class="row g-3">
@@ -55,7 +54,6 @@
         <div class="card-header bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
             <div>
                 <h5 class="mb-1 fw-bold">Nguyên liệu cần đặt</h5>
-                <p class="text-muted mb-0">Thêm từng nguyên liệu và số lượng cần mua cho đơn hàng.</p>
             </div>
             <button class="btn btn-outline-secondary" type="button" onclick="addItemRow()">+ Thêm dòng</button>
         </div>

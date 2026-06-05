@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<h2 class="mb-4 text-center fw-bold text-dark">🏛️ DUYỆT KIỂM KÊ ĐỊNH KỲ</h2>
+<h2 class="mb-4 text-center fw-bold text-dark">DUYỆT KIỂM KÊ ĐỊNH KỲ</h2>
 
 @forelse($danhSachPhiu as $phiu)
     <div class="card shadow mb-5 border-0">

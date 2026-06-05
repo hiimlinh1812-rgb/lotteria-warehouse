@@ -114,7 +114,7 @@
 
 <div class="endday-shell">
     <div class="endday-card">
-        <div class="endday-header">📊 LOTTERIA BÀ TRIỆU - KIỂM KÊ CUỐI NGÀY</div>
+        <div class="endday-header">LOTTERIA BÀ TRIỆU - KIỂM KÊ CUỐI NGÀY</div>
 
         <div class="p-3 p-lg-4">
             @if($rejectedReport)
@@ -136,7 +136,7 @@
                             <tr>
                                 <th class="dark-col">
                                     <button type="button" class="sort-toggle" id="sort-ma-nguyen-lieu" data-order="asc">
-                                        <span>Mã Nguyên Liệu</span>
+                                        <span>Mã NL</span>
                                         <span class="sort-indicator" id="sort-indicator">▲</span>
                                     </button>
                                 </th>

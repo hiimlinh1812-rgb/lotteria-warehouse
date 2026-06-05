@@ -21,11 +21,6 @@
     <div>
         <h2 class="text-lotteria fw-bold mb-1">Kiểm kê</h2>
     </div>
-    <div class="d-flex flex-wrap gap-2">
-        <a href="{{ route('quanly.kiemke.bep') }}" class="btn btn-outline-secondary">Duyệt kiểm kê bếp</a>
-        <a href="{{ route('quanly.khochinh.duyet') }}" class="btn btn-outline-secondary">Duyệt kiểm kê định kỳ</a>
-        <a href="{{ route('cht.khochinh.thongke') }}" class="btn btn-outline-secondary">Thống kê tồn kho</a>
-    </div>
 </div>
 
 <div class="row g-4 mb-4">
@@ -68,36 +63,6 @@
                 <div class="display-6 fw-bold text-success">{{ $summary['approved'] }}</div>
             </div>
         </div>
-    </div>
-</div>
-
-<div class="row g-4 mb-4">
-    <div class="col-lg-4">
-        <a href="{{ route('quanly.kiemke.bep') }}" class="text-decoration-none">
-            <div class="card page-card h-100">
-                <div class="card-body">
-                    <h5 class="fw-bold text-lotteria">Kiểm kê bếp</h5>
-                </div>
-            </div>
-        </a>
-    </div>
-    <div class="col-lg-4">
-        <a href="{{ route('quanly.khochinh.duyet') }}" class="text-decoration-none">
-            <div class="card page-card h-100">
-                <div class="card-body">
-                    <h5 class="fw-bold text-lotteria">Kiểm kê định kỳ</h5>
-                </div>
-            </div>
-        </a>
-    </div>
-    <div class="col-lg-4">
-        <a href="{{ route('cht.khochinh.thongke') }}" class="text-decoration-none">
-            <div class="card page-card h-100">
-                <div class="card-body">
-                    <h5 class="fw-bold text-lotteria">Thống kê tồn kho</h5>
-                </div>
-            </div>
-        </a>
     </div>
 </div>
 

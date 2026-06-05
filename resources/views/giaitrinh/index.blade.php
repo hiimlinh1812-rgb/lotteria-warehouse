@@ -3,7 +3,7 @@
 @section('content')
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
-        <h2 class="fw-bold text-dark">📋 HỒ SƠ DANH SÁCH PHIẾU GIẢI TRÌNH THẤT THOÁT</h2>
+        <h2 class="fw-bold text-dark">📋 DANH SÁCH PHIẾU GIẢI TRÌNH THẤT THOÁT</h2>
         <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary btn-sm fw-bold shadow-sm">
             Quay lại Dashboard
         </a>
@@ -20,11 +20,11 @@
             <table class="table table-bordered table-striped text-center align-middle mb-0">
                 <thead class="table-dark">
                     <tr>
-                        <th style="width: 15%;">Mã Giải Trình</th>
-                        <th style="width: 15%;">Mã Phiếu Kiểm</th>
-                        <th style="width: 15%;">Ngày Kiểm Ca</th>
-                        <th style="width: 30%;">Nội Dung Giải Trình Chi Tiết</th>
-                        <th style="width: 25%;">Nguyên Nhân Khách Quan</th>
+                        <th style="width: 15%;">Mã Phiếu Giải Trình</th>
+                        <th style="width: 15%;">Mã Phiếu Kiểm Kê</th>
+                        <th style="width: 15%;">Ngày Kiểm</th>
+                        <th style="width: 30%;">Nội Dung Giải Trình</th>
+                        <th style="width: 25%;">Nguyên Nhân</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -41,7 +41,6 @@
                             <td colspan="5" class="py-5 text-muted">
                                 <span class="fs-1 d-block mb-3">📄</span>
                                 <h6 class="fw-bold text-secondary">Hiện tại chưa có phiếu giải trình thất thoát nào được ghi nhận trên hệ thống!</h6>
-                                <p class="small mb-0">Hồ sơ sẽ tự động nạp khi Quản lý thực hiện luồng đối soát chênh lệch vật lý.</p>
                             </td>
                         </tr>
                     @endforelse
