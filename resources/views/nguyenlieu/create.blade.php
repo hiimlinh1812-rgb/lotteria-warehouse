@@ -21,20 +21,16 @@
                     </div>
 
                     <div class="row mb-3">
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label class="form-label fw-semibold">Đơn vị tính</label>
                             <input type="text" name="DonViTinh" class="form-control" placeholder="VD: Kg, Túi, Hộp" required>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label class="form-label fw-semibold">Nhóm hàng</label>
                             <select name="NhomHang" class="form-select">
                                 <option value="Hàng đông">Hàng đông</option>
                                 <option value="Hàng khô">Hàng khô</option>
                             </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">Số lượng tồn kho ban đầu</label>
-                            <input type="number" name="SoLuongTonKho" class="form-control" value="0" required>
                         </div>
                     </div>
 

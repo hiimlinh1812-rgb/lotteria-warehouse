@@ -22,20 +22,16 @@
                     </div>
 
                     <div class="row mb-3">
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label class="form-label fw-semibold">Đơn vị tính</label>
                             <input type="text" name="DonViTinh" class="form-control" value="{{ $nl->DonViTinh }}" required>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label class="form-label fw-semibold">Nhóm hàng</label>
                             <select name="NhomHang" class="form-select">
                                 <option value="Hàng đông" {{ $nl->NhomHang == 'Hàng đông' ? 'selected' : '' }}>Hàng đông</option>
                                 <option value="Hàng khô" {{ $nl->NhomHang == 'Hàng khô' ? 'selected' : '' }}>Hàng khô</option>
                             </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">Số lượng tồn kho</label>
-                            <input type="number" name="SoLuongTonKho" class="form-control" value="{{ $nl->SoLuongTonKho }}" required>
                         </div>
                     </div>
 

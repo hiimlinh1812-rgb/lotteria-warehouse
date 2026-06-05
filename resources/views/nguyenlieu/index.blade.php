@@ -14,7 +14,6 @@
                     <th>Tên nguyên liệu</th>
                     <th>Nhóm hàng</th>
                     <th>Đơn vị</th>
-                    <th>Tồn kho</th>
                     <th>Thao tác</th>
                 </tr>
             </thead>
@@ -23,9 +22,12 @@
                 <tr>
                     <td>{{ $nl->MaNguyenLieu }}</td>
                     <td class="fw-bold">{{ $nl->TenNguyenLieu }}</td>
-                    <td><span class="badge bg-secondary">{{ $nl->NhomHang }}</span></td>
+                    <td>
+                        <span class="badge {{ $nl->NhomHang === 'Hàng đông' ? 'bg-success' : ($nl->NhomHang === 'Hàng khô' ? 'bg-warning text-dark' : 'bg-secondary') }}">
+                            {{ $nl->NhomHang }}
+                        </span>
+                    </td>
                     <td>{{ $nl->DonViTinh }}</td>
-                    <td class="text-danger fw-bold">{{ $nl->SoLuongTonKho }}</td>
                     <td class="d-flex gap-1">
                         <a href="/nguyen-lieu/{{ $nl->MaNguyenLieu }}/edit" class="btn btn-sm btn-outline-primary">Sửa</a>
                         

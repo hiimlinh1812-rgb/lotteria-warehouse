@@ -32,8 +32,14 @@ class NguyenLieuController extends Controller
      */
     public function store(\Illuminate\Http\Request $request)
     {
-        // Lấy tất cả dữ liệu từ form và lưu thẳng vào bảng nguyen_lieus
-        \App\Models\NguyenLieu::create($request->all());
+        \App\Models\NguyenLieu::create([
+            'MaNguyenLieu' => $request->input('MaNguyenLieu'),
+            'TenNguyenLieu' => $request->input('TenNguyenLieu'),
+            'DonViTinh' => $request->input('DonViTinh'),
+            'NhomHang' => $request->input('NhomHang'),
+            'SoLuongTonKho' => 0,
+            'MoTa' => $request->input('MoTa'),
+        ]);
         
         // Lưu xong thì quay tự động quay trở lại trang danh sách
         return redirect('/nguyen-lieu');
@@ -59,7 +65,12 @@ class NguyenLieuController extends Controller
     public function update(\Illuminate\Http\Request $request, $id)
     {
         $nl = \App\Models\NguyenLieu::findOrFail($id);
-        $nl->update($request->all());
+        $nl->update([
+            'TenNguyenLieu' => $request->input('TenNguyenLieu'),
+            'DonViTinh' => $request->input('DonViTinh'),
+            'NhomHang' => $request->input('NhomHang'),
+            'MoTa' => $request->input('MoTa'),
+        ]);
         return redirect('/nguyen-lieu');
     }
 
