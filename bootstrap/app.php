@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // ĐÓNG NGOẶC CHUẨN XÁC: Đóng mảng ] và đóng hàm );
         $middleware->validateCsrfTokens(except: [
+            'login',
             'kiem-ke-bep/store',
             'kho-chinh/kiem-ke/store'
         ]);

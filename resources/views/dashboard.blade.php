@@ -1,45 +1,64 @@
 @extends('layouts.app')
 
 @section('content')
-@can('isCuaHangTruong')
-<div class="row">
-    <div class="col-12 mb-4">
-        <h2 class="text-danger fw-bold border-bottom pb-2">DASHBOARD TỔNG QUAN KHO</h2>
-        <p class="text-muted">Chào mừng Cửa hàng trưởng đã quay lại hệ thống!</p>
-    </div>
-
-    <div class="col-md-4">
-        <div class="card shadow-sm border-0 border-start border-danger border-4">
-            <div class="card-body">
-                <h6 class="text-muted fw-semibold">TỔNG NGUYÊN LIÊU</h6>
-                <h3 class="fw-bold text-dark">120 <span class="fs-6 fw-normal">mặt hàng</span></h3>
-            </div>
+<div class="container">
+    <h2 class="fw-bold text-dark">Chào mừng quay lại hệ thống Lotteria!</h2>
+    
+    <div class="row mt-4">
+        <div class="col-md-6 mb-3">
+            <a href="{{ route('quanly.khochinh.duyet') }}" class="text-decoration-none widget-link">
+                <div class="card bg-warning text-white h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <h5 class="fw-semibold">Phiếu chờ duyệt</h5>
+                        <h3 class="display-5 fw-bold mb-0 mt-2">{{ $countChoDuyet }}</h3>
+                    </div>
+                </div>
+            </a>
         </div>
-    </div>
 
-    <div class="col-md-4">
-        <div class="card shadow-sm border-0 border-start border-warning border-4">
-            <div class="card-body">
-                <h6 class="text-muted fw-semibold">HÀNG SẮP HẾT (CẦN NHẬP)</h6>
-                <h3 class="fw-bold text-dark">5 <span class="fs-6 fw-normal">mặt hàng</span></h3>
-            </div>
+        <div class="col-md-6 mb-3">
+            <a href="{{ route('xuat-huy.index') }}" class="text-decoration-none widget-link">
+                <div class="card bg-danger text-white h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <h5 class="fw-semibold">Phiếu xuất hủy</h5>
+                        <h3 class="display-5 fw-bold mb-0 mt-2">{{ $countXuatHuy }}</h3>
+                    </div>
+                </div>
+            </a>
         </div>
-    </div>
 
-    <div class="col-md-4">
-        <div class="card shadow-sm border-0 border-start border-info border-4">
-            <div class="card-body">
-                <h6 class="text-muted fw-semibold">PHIẾU CHỜ DUYỆT</h6>
-                <h3 class="fw-bold text-dark">2 <span class="fs-6 fw-normal">phiếu</span></h3>
-            </div>
+        <div class="col-md-6 mb-3">
+            <a href="{{ route('cht.khochinh.thongke') }}" class="text-decoration-none widget-link">
+                <div class="card bg-primary text-white h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <h5 class="fw-semibold">Phiếu thống kê tồn kho</h5>
+                        <h3 class="display-5 fw-bold mb-0 mt-2">{{ $countThongKe }}</h3>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <a href="{{ route('giai-trinh.index') }}" class="text-decoration-none widget-link">
+                <div class="card bg-secondary text-white h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <h5 class="fw-semibold">Phiếu giải trình thất thoát</h5>
+                        <h3 class="display-5 fw-bold mb-0 mt-2">{{ $countGiaiTrinh }}</h3>
+                    </div>
+                </div>
+            </a>
         </div>
     </div>
 </div>
-@else
-{{-- Nội dung cho Quản lý hoặc Nhân viên khi họ vào trang Dashboard --}}
-<div class="alert alert-info text-center mt-5">
-    <h4>Chào mừng bạn đến với hệ thống quản lý Lotteria!</h4>
-    <p>Vui lòng chọn chức năng trong thanh menu phía trên để bắt đầu công việc.</p>
-</div>
-@endcan
+
+<style>
+    .widget-link {
+        display: block;
+        transition: transform 0.2s ease-in-out, filter 0.2s ease-in-out;
+    }
+    .widget-link:hover {
+        transform: translateY(-4px); /* Card nhấc nhẹ lên tạo hiệu ứng 3D */
+        filter: brightness(92%);     /* Tối màu nhẹ để sếp biết card click được */
+    }
+</style>
 @endsection

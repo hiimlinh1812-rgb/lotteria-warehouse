@@ -6,7 +6,6 @@
     <title>Lotteria Warehouse Management</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        /* Tùy chỉnh nhẹ để menu trông chuyên nghiệp hơn */
         .navbar-nav .nav-link.active {
             font-weight: bold;
             background-color: rgba(255,255,255,0.2);
@@ -16,15 +15,16 @@
 </head>
 <body class="bg-light">
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-danger">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-danger shadow-sm">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">Lotteria Kho</a>
+            <a class="navbar-brand fw-bold fs-4" href="#">Lotteria Kho</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     
+                    <!-- 1. CẤP QUYỀN: CỬA HÀNG TRƯỞNG -->
                     @can('isCuaHangTruong')
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">Dashboard</a>
@@ -37,26 +37,40 @@
                         </li>
                     @endcan
 
+                    <!-- 2. CẤP QUYỀN: QUẢN LÝ CA (ẨN/HIỆN ĐÚNG LINK PHÊ DUYỆT) -->
                     @can('isQuanLy')
                         <li class="nav-item"><a class="nav-link" href="#">Đơn hàng</a></li>
                         <li class="nav-item"><a class="nav-link" href="#">Xuất kho</a></li>
                         <li class="nav-item"><a class="nav-link" href="#">Xuất hủy</a></li>
                         <li class="nav-item"><a class="nav-link" href="#">Kiểm kê</a></li>
                         <li class="nav-item"><a class="nav-link" href="#">Giải trình</a></li>
+                        <li class="nav-item">
+                            <a class="nav-link text-warning fw-bold {{ request()->routeIs('quanly.kiemke.bep') ? 'active' : '' }}" href="{{ route('quanly.kiemke.bep') }}">Duyệt kiểm kê bếp</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-warning fw-bold {{ request()->routeIs('quanly.khochinh.duyet') ? 'active' : '' }}" href="{{ route('quanly.khochinh.duyet') }}">Duyệt kiểm kho chính</a>
+                        </li>
                     @endcan
 
+                    <!-- 3. CẤP QUYỀN: NHÂN VIÊN CA TRỰC (ẨN/HIỆN ĐÚNG LINK LẬP PHIẾU) -->
                     @can('isNhanVien')
                         <li class="nav-item"><a class="nav-link" href="#">Phiếu xuất kho</a></li>
                         <li class="nav-item"><a class="nav-link" href="#">Danh sách đơn hàng</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#">Kiểm kê cuối ngày</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#">Kiểm kê hàng hóa định kỳ</a></li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('kiemke.bep') ? 'active' : '' }}" href="{{ route('kiemke.bep') }}">Kiểm kê cuối ngày</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('khochinh.kiemke') ? 'active' : '' }}" href="{{ route('khochinh.kiemke') }}">Kiểm kê hàng hóa định kỳ</a>
+                        </li>
                     @endcan
+
                 </ul>
 
+                <!-- THÔNG TIN TÀI KHOẢN ĐĂNG NHẬP CHUẨN AUTH -->
                 <div class="d-flex align-items-center text-white">
                     @if(auth()->check())
                         <span class="me-3">Xin chào, <strong>{{ auth()->user()->HoTen }}</strong>!</span>
-                        <a href="{{ route('logout') }}" class="btn btn-outline-light btn-sm">Đăng xuất</a>
+                        <a href="{{ route('logout') }}" class="btn btn-outline-light btn-sm fw-bold">Đăng xuất</a>
                     @endif
                 </div>
             </div>
@@ -64,6 +78,12 @@
     </nav>
 
     <div class="container mt-4">
+        @if (session('status'))
+            <div class="alert alert-success shadow-sm mb-4">
+                {{ session('status') }}
+            </div>
+        @endif
+
         @yield('content') 
     </div>
 

@@ -8,6 +8,6 @@ class KiemKeDinhKyController extends Controller
 {
     public function index() 
     {
-        return view('dang-trien-khai');
+        return view('kiem_ke_bep');
     }
 }

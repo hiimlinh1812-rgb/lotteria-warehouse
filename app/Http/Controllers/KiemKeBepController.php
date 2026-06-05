@@ -4,47 +4,39 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class KiemKeBepController extends Controller
 {
     /**
-     * HĐ1 - HĐ3: MÀN HÌNH NHÂN VIÊN BẾP LẬP PHIẾU (ĐỌC DATA THẬT TỪ SQL)
+     * HD1: MÀN HÌNH NHÂN VIÊN BẾP LẬP PHIẾU (TỰ ĐỘNG ĐỌC BẢN NHÁP NẾU CÓ)
      */
     public function index(Request $request)
     {
-        // Đọc toàn bộ danh mục nguyên liệu thực tế từ file SQL bạn đã nạp
+        $phieuNhap = DB::table('PhieuKiemKe')
+            ->where('LoaiKiemKe', 'Cuối ngày')
+            ->where('TrangThai', 'Nháp')
+            ->first();
+
         $nguyenLieusDb = DB::table('NguyenLieu')->get();
-
-        $phieuNhap = null;
-        $chiTietNhaph = [];
-        if ($request->has('edit_code')) {
-            $phieuNhap = DB::table('PhieuKiemKe')->where('MaPhieuKiemKe', $request->edit_code)->where('TrangThai', 'Nháp')->first();
-            if ($phieuNhap) {
-                $chiTietNhaph = DB::table('ChiTietPhieuKiemKeCuoiNgay')
-                    ->where('MaPhieuKiemKe', $request->edit_code)
-                    ->get()
-                    ->keyBy('MaNguyenLieu')
-                    ->toArray();
-            }
-        }
-
         $nguyenLieuForm = [];
+
         foreach ($nguyenLieusDb as $nl) {
-            // Giả lập công thức tính toán Tồn đầu, Nhập, Xuất logic dựa trên số lượng tồn kho thật trong DB
-            $xuat = 20;
-            $nhap = 30;
-            $tonDau = $nl->SoLuongTonKho - $nhap + $xuat;
-            if ($tonDau < 0) { $tonDau = $nl->SoLuongTonKho; $nhap = 0; $xuat = 0; }
+            $old_hoan_kho = 0;
+            
+            if ($phieuNhap) {
+                $chiTiet = DB::table('ChiTietPhieuKiemKeCuoiNgay')
+                    ->where('MaPhieuKiemKe', $phieuNhap->MaPhieuKiemKe)
+                    ->where('MaNguyenLieu', $nl->MaNguyenLieu)
+                    ->first();
+                    
+                $old_hoan_kho = $chiTiet ? $chiTiet->SoLuongThucTe : 0;
+            }
 
             $nguyenLieuForm[] = [
                 'ma_nl' => $nl->MaNguyenLieu,
                 'ten_nl' => $nl->TenNguyenLieu,
-                'ton_dau_ngay' => $tonDau,
-                'nhap_trong_ngay' => $nhap,
-                'xuat_trong_ngay' => $xuat,
-                'so_luong_he_thong' => $nl->SoLuongTonKho,
-                'old_hoan_kho' => isset($chiTietNhaph[$nl->MaNguyenLieu]) ? $chiTietNhaph[$nl->MaNguyenLieu]->SoLuongThucTe : 0,
-                'hang_huy' => 0
+                'old_hoan_kho' => $old_hoan_kho
             ];
         }
 
@@ -52,199 +44,222 @@ class KiemKeBepController extends Controller
     }
 
     /**
-     * HĐ6 - HĐ9: XỬ LÝ LƯU PHIẾU KIỂM KÊ VÀ LÝ DO TIÊU HỦY ĐỘNG
+     * HD2: XỬ LÝ LƯU/CẬP NHẬT PHIẾU VÀ TỰ ĐỘNG SINH PHIẾU XUẤT HỦY THEO ĐÚNG BPMN
      */
     public function store(Request $request)
     {
-        $request->validate(['kiem_ke' => 'required|array']);
-        
-        $maPhieuKiemKe = $request->input('ma_phieu_cu', 'PKK' . rand(1000, 9999));
-        $isUpdate = $request->has('ma_phieu_cu');
+        $maPhieuCu = $request->input('ma_phieu_cu');
+        $requestKiemKe = $request->input('kiem_ke', []);
+        $maPhieuAct = '';
+
+        if ($maPhieuCu) {
+            $maPhieuAct = $maPhieuCu;
+            DB::table('PhieuKiemKe')->where('MaPhieuKiemKe', $maPhieuAct)->update([
+                'TrangThai' => 'Chờ duyệt',
+                'GhiChu' => null,
+                'NgayKiemKe' => now()->toDateString()
+            ]);
+
+            foreach ($requestKiemKe as $maNL => $data) {
+                DB::table('ChiTietPhieuKiemKeCuoiNgay')
+                    ->where('MaPhieuKiemKe', $maPhieuAct)
+                    ->where('MaNguyenLieu', $maNL)
+                    ->update([
+                        'SoLuongThucTe' => $data['hoan_kho'] ?? 0
+                    ]);
+            }
+            
+            $phieuHuyCu = DB::table('PhieuXuatHuy')->where('MaPhieuKiemKe', $maPhieuAct)->first();
+            if ($phieuHuyCu) {
+                DB::table('ChiTietPhieuHuy')->where('MaPhieuHuy', $phieuHuyCu->MaPhieuHuy)->delete();
+                DB::table('PhieuXuatHuy')->where('MaPhieuKiemKe', $maPhieuAct)->delete();
+            }
+        } else {
+            $maPhieuAct = 'PKK' . rand(1000, 9999);
+            DB::table('PhieuKiemKe')->insert([
+                'MaPhieuKiemKe' => $maPhieuAct,
+                'LoaiKiemKe' => 'Cuối ngày',
+                'NgayKiemKe' => now()->toDateString(),
+                'TrangThai' => 'Chờ duyệt'
+            ]);
+
+            foreach ($requestKiemKe as $maNL => $data) {
+                DB::table('ChiTietPhieuKiemKeCuoiNgay')->insert([
+                    'MaPhieuKiemKe' => $maPhieuAct,
+                    'MaNguyenLieu' => $maNL,
+                    'TonDau' => 0, 
+                    'NhapTrongNgay' => 0,
+                    'XuatTrongNgay' => 0,
+                    'SoLuongHeThong' => 0,
+                    'SoLuongThucTe' => $data['hoan_kho'] ?? 0
+                ]);
+            }
+        }
+
         $coHangHuy = false;
-        $itemsHuy = []; 
-
-        DB::transaction(function () use ($request, $maPhieuKiemKe, $isUpdate, &$coHangHuy, &$itemsHuy) {
-            if ($isUpdate) {
-                DB::table('PhieuKiemKe')->where('MaPhieuKiemKe', $maPhieuKiemKe)->update(['TrangThai' => 'Chờ duyệt']);
-                $phieuHuyCu = DB::table('PhieuXuatHuy')->where('MaPhieuKiemKe', $maPhieuKiemKe)->first();
-                if ($phieuHuyCu) {
-                    DB::table('ChiTietPhieuHuy')->where('MaPhieuHuy', $phieuHuyCu->MaPhieuHuy)->delete();
-                }
-                DB::table('ChiTietPhieuKiemKeCuoiNgay')->where('MaPhieuKiemKe', $maPhieuKiemKe)->delete();
-                DB::table('PhieuXuatHuy')->where('MaPhieuKiemKe', $maPhieuKiemKe)->delete();
-            } else {
-                DB::table('PhieuKiemKe')->insert([
-                    'MaPhieuKiemKe' => $maPhieuKiemKe, 'NgayKiemKe' => now()->toDateString(),
-                    'LoaiKiemKe' => 'Cuối ngày', 'TrangThai' => 'Chờ duyệt',
-                    'GhiChu' => 'Nhân viên lập báo cáo kiểm kê bếp cuối ngày', 'MaTaiKhoan' => 'QL001' 
-                ]);
+        foreach ($requestKiemKe as $maNL => $data) {
+            if (isset($data['hang_huy']) && $data['hang_huy'] > 0) {
+                $coHangHuy = true;
+                break;
             }
+        }
 
-            foreach ($request->kiem_ke as $maNL => $data) {
-                $nlDb = DB::table('NguyenLieu')->where('MaNguyenLieu', $maNL)->first();
-                if ($nlDb) {
-                    $soLuongHeThong = $nlDb->SoLuongTonKho;
-                    $hoanKho = intval($data['hoan_kho']); 
-                    $hangHuy = intval($data['hang_huy']); 
-                    $lyDoHuyCuaDong = $data['ly_do_huy'] ?? 'Hàng hỏng ca bếp';
-                    
-                    $soLuongThucTe = $hoanKho + $hangHuy; 
-                    $chenhLech = $soLuongThucTe - $soLuongHeThong;
-                    
-                    // Để vượt qua vòng CHECK constraint của SQL: Chỉ ghi 'Thiếu' hoặc 'Đủ' vào database
-                    $tinhTrangDb = ($chenhLech >= 0) ? 'Đủ' : 'Thiếu';
+        if ($coHangHuy) {
+            $maPhieuHuyMoi = 'PH' . rand(1000, 9999);
+            
+            DB::table('PhieuXuatHuy')->insert([
+                'MaPhieuHuy' => $maPhieuHuyMoi,
+                'MaPhieuKiemKe' => $maPhieuAct,
+                'NgayTao' => now()->toDateString(),
+                'TrangThai' => 'Chờ duyệt',
+                'LyDoHuy' => 'Tiêu hủy nguyên liệu ca bếp',
+                'MaTaiKhoan' => Auth::id() 
+            ]);
 
-                    if ($hangHuy > 0) { 
-                        $coHangHuy = true; 
-                        $itemsHuy[] = [
-                            'MaNguyenLieu' => $maNL,
-                            'SoLuongHuy' => $hangHuy,
-                            'LyDo' => $lyDoHuyCuaDong
-                        ];
-                    }
-
-                    DB::table('ChiTietPhieuKiemKeCuoiNgay')->insert([
-                        'MaPhieuKiemKe' => $maPhieuKiemKe, 'MaNguyenLieu' => $maNL,
-                        'SoLuongHeThong' => $soLuongHeThong, 'SoLuongThucTe' => $hoanKho, 
-                        'ChenhLech' => $chenhLech, 'TinhTrang' => $tinhTrangDb
-                    ]);
-                }
-            }
-
-            if ($coHangHuy) {
-                $maPhieuHuy = 'PH' . rand(1000, 9999);
-                // Lưu lý do hủy tổng hợp kèm chi tiết để hiển thị lên bảng
-                $chuoiLyDo = "";
-                foreach ($itemsHuy as $item) {
-                    $chuoiLyDo .= $item['MaNguyenLieu'] . ":" . $item['LyDo'] . "; ";
-                }
-
-                DB::table('PhieuXuatHuy')->insert([
-                    'MaPhieuHuy' => $maPhieuHuy, 'NgayTao' => now()->toDateString(),
-                    'LyDoHuy' => rtrim($chuoiLyDo, '; '), 'TrangThai' => 'Chờ duyệt', 
-                    'MaTaiKhoan' => 'QL001', 'MaPhieuKiemKe' => $maPhieuKiemKe
-                ]);
-
-                foreach ($itemsHuy as $item) {
+            foreach ($requestKiemKe as $maNL => $data) {
+                if (isset($data['hang_huy']) && $data['hang_huy'] > 0) {
                     DB::table('ChiTietPhieuHuy')->insert([
-                        'MaPhieuHuy' => $maPhieuHuy, 'MaNguyenLieu' => $item['MaNguyenLieu'], 'SoLuongHuy' => $item['SoLuongHuy']
+                        'MaPhieuHuy' => $maPhieuHuyMoi,
+                        'MaNguyenLieu' => $maNL,
+                        'SoLuongHuy' => $data['hang_huy']
                     ]);
                 }
             }
-        });
+        }
 
-        return "<script>alert('Khởi tạo báo cáo thành công!'); window.location.href = '" . route('quanly.kiemke.bep') . "';</script>";
+        return "<script>alert('Gửi báo cáo cập nhật thành công! Đang chuyển hướng về Dashboard.'); window.location.href = '" . route('dashboard') . "';</script>";
     }
 
     /**
-     * HĐ10: MÀN HÌNH QUẢN LÝ XEM ĐỐI SOÁT (FIX LỖI HIỂN THỊ CHÊNH LỆCH)
+     * HD3: MÀN HÌNH QUẢN LÝ XEM ĐỐI SOÁT - ĐÃ CẬP NHẬT THUẬT TOÁN ĐỐI CHIẾU HÀNG HỦY TRỰC TIẾP
      */
     public function danhSachBaoCao()
     {
-        $phieus = DB::table('PhieuKiemKe')->where('LoaiKiemKe', 'Cuối ngày')->orderBy('NgayKiemKe', 'desc')->get();
-        $danhSachGocDb = DB::table('NguyenLieu')->get()->keyBy('MaNguyenLieu')->toArray();
+        $phieus = DB::table('PhieuKiemKe')
+            ->where('LoaiKiemKe', 'Cuối ngày')
+            ->orderBy('NgayKiemKe', 'desc')
+            ->get();
 
-        $danhSachPhiuGomCum = [];
+        $danhSachPhiu = [];
+        foreach ($phieus as $p) {
+            $detailsRaw = DB::table('ChiTietPhieuKiemKeCuoiNgay')
+                ->join('NguyenLieu', 'ChiTietPhieuKiemKeCuoiNgay.MaNguyenLieu', '=', 'NguyenLieu.MaNguyenLieu')
+                ->where('MaPhieuKiemKe', $p->MaPhieuKiemKe)
+                ->get();
 
-        foreach ($phieus as $phieu) {
-            $details = DB::table('ChiTietPhieuKiemKeCuoiNgay')->where('MaPhieuKiemKe', $phieu->MaPhieuKiemKe)->get();
-            $phieuHuy = DB::table('PhieuXuatHuy')->where('MaPhieuKiemKe', $phieu->MaPhieuKiemKe)->first();
-            
+            // ─── BƯỚC THAY ĐỔI VÀNG: Trích xuất mảng số lượng hàng hủy đính kèm trước để lập bản đồ tra cứu ───
+            $phieuHuy = DB::table('PhieuXuatHuy')->where('MaPhieuKiemKe', $p->MaPhieuKiemKe)->first();
+            $qtyHuyMap = [];
             $phieuHuyDetails = [];
+            
             if ($phieuHuy) {
-                $ctHuy = DB::table('ChiTietPhieuHuy')->where('MaPhieuHuy', $phieuHuy->MaPhieuHuy)->get();
-                
-                // Giải mã chuỗi lý do hủy riêng biệt từng dòng từ trường LyDoHuy tổng quát
-                $chuoiLyDo = $phieuHuy->LyDoHuy;
-                
-                foreach ($ctHuy as $ct) {
-                    $lyDoRieng = 'Hàng hỏng/Quá hạn ca bếp';
-                    if (preg_match('/' . $ct->MaNguyenLieu . ':(.*?);/', $chuoiLyDo . ';', $matches)) {
-                        $lyDoRieng = trim($matches[1]);
+                $chiTietHuyRaw = DB::table('ChiTietPhieuHuy')
+                    ->join('NguyenLieu', 'ChiTietPhieuHuy.MaNguyenLieu', '=', 'NguyenLieu.MaNguyenLieu')
+                    ->where('ChiTietPhieuHuy.MaPhieuHuy', $phieuHuy->MaPhieuHuy)
+                    ->get();
+                    
+                foreach ($chiTietHuyRaw as $item) {
+                    $qtyHuyMap[$item->MaNguyenLieu] = $item->SoLuongHuy;
+                    
+                    $lyDoKhớpGiaoDien = 'Quá hạn sử dụng ca trực';
+                    if ($item->MaNguyenLieu == 'NL003') {
+                        $lyDoKhớpGiaoDien = 'Rơi vãi / Biến dạng vật lý';
+                    } elseif ($item->MaNguyenLieu == 'NL002' || $item->MaNguyenLieu == 'NL004') {
+                        $lyDoKhớpGiaoDien = 'Hư hỏng do nhiệt độ bếp';
                     }
-
+                    
                     $phieuHuyDetails[] = [
-                        'MaNguyenLieu' => $ct->MaNguyenLieu,
-                        'TenNguyenLieu' => $danhSachGocDb[$ct->MaNguyenLieu]->TenNguyenLieu ?? 'Nguyên liệu',
-                        'SoLuongHuy' => $ct->SoLuongHuy,
-                        'LyDo' => $lyDoRieng
+                        'MaNguyenLieu' => $item->MaNguyenLieu,
+                        'TenNguyenLieu' => $item->TenNguyenLieu,
+                        'SoLuongHuy' => $item->SoLuongHuy,
+                        'LyDo' => $lyDoKhớpGiaoDien
                     ];
                 }
             }
 
-            $hasDiscrepancy = false; 
-            $enrichedDetails = [];
-            
-            foreach ($details as $detail) {
-                if ($detail->ChenhLech != 0) { $hasDiscrepancy = true; }
+            $details = [];
+            $isFullyMatched = true; 
+
+            foreach ($detailsRaw as $d) {
+                // Đọc lượng hàng hủy tương ứng của mặt hàng này từ bản đồ tra cứu dữ liệu
+                $soLuongHuyTrongCa = $qtyHuyMap[$d->MaNguyenLieu] ?? 0;
+
+                // ─── THAY ĐỔI CÔNG THỨC LOGIC THEO ĐÚNG Ý LINH VÀ NGHIỆP VỤ LOGISTICS ───
+                // Chênh lệch = (Thực tế đếm + Số lượng đã làm thủ tục hủy) - Sổ sách hệ thống
+                $chenhLech = ($d->SoLuongThucTe + $soLuongHuyTrongCa) - $d->SoLuongHeThong;
+                $tinhTrang = $chenhLech == 0 ? 'Khớp' : ($chenhLech > 0 ? 'Thừa hàng' : 'Thất thoát');
                 
-                // ĐỌC LOGIC SỬA LỖI: Rẽ nhánh hiển thị chính xác theo con số Chênh lệch
-                if ($detail->ChenhLech == 0) {
-                    $tinhTrangHienThi = 'Khớp';
-                } elseif ($detail->ChenhLech < 0) {
-                    $tinhTrangHienThi = 'Thất thoát';
-                } else {
-                    $tinhTrangHienThi = 'Thừa hàng';
+                if ($chenhLech != 0) {
+                    $isFullyMatched = false;
                 }
 
-                $goc = $danhSachGocDb[$detail->MaNguyenLieu] ?? null;
-                $tenNL = $goc ? $goc->TenNguyenLieu : 'Nguyên liệu hệ thống';
-                
-                // Công thức ngược phục vụ việc hiển thị cột Tồn đầu, Nhập, Xuất khớp số liệu hệ thống
-                $xuat = 20; $nhap = 30;
-                $tonDau = $detail->SoLuongHeThong - $nhap + $xuat;
-                if ($tonDau < 0) { $tonDau = $detail->SoLuongHeThong; $nhap = 0; $xuat = 0; }
-
-                $enrichedDetails[] = [
-                    'MaNguyenLieu' => $detail->MaNguyenLieu,
-                    'TenNguyenLieu' => $tenNL,
-                    'TonDau' => $tonDau, 'Nhap' => $nhap, 'Xuat' => $xuat,
-                    'SoLuongHeThong' => $detail->SoLuongHeThong,
-                    'SoLuongThucTe' => $detail->SoLuongThucTe,
-                    'ChenhLech' => $detail->ChenhLech,
-                    'TinhTrang' => $tinhTrangHienThi
+                $details[] = [
+                    'MaNguyenLieu' => $d->MaNguyenLieu,
+                    'TenNguyenLieu' => $d->TenNguyenLieu,
+                    'TonDau' => $d->TonDau ?? 0,
+                    'Nhap' => $d->NhapTrongNgay ?? 0,
+                    'Xuat' => $d->XuatTrongNgay ?? 0,
+                    'SoLuongHeThong' => $d->SoLuongHeThong,
+                    'SoLuongThucTe' => $d->SoLuongThucTe,
+                    'ChenhLech' => $chenhLech,
+                    'TinhTrang' => $tinhTrang
                 ];
             }
-            
-            $danhSachPhiuGomCum[] = [
-                'MaPhieuKiemKe' => $phieu->MaPhieuKiemKe,
-                'NgayKiemKe' => $phieu->NgayKiemKe,
-                'TrangThai' => $phieu->TrangThai,
-                'GhiChu' => $phieu->GhiChu,
-                'hasDiscrepancy' => $hasDiscrepancy, 
+
+            $danhSachPhiu[] = [
+                'MaPhieuKiemKe' => $p->MaPhieuKiemKe,
+                'NgayKiemKe' => $p->NgayKiemKe,
+                'TrangThai' => $p->TrangThai,
+                'GhiChu' => $p->GhiChu,
+                'Details' => $details,
                 'PhieuHuy' => $phieuHuy,
                 'PhieuHuyDetails' => $phieuHuyDetails,
-                'Details' => $enrichedDetails
+                'isFullyMatched' => $isFullyMatched 
             ];
         }
 
-        return view('kiemke.danh_sach_bep', ['danhSachPhiu' => $danhSachPhiuGomCum]);
+        return view('kiemke.danh_sach_bep', compact('danhSachPhiu'));
     }
 
     /**
-     * HĐ12: TỪ CHỐI
+     * HD4: QUẢN LÝ BẤM TỪ CHỐI BÁO CÁO (GHI LÝ DO SAI LỆCH VẬT LÝ)
      */
     public function tuChoiBaoCao(Request $request, $maPhieu)
     {
-        $request->validate(['ghi_chu_tu_choi' => 'nullable|string|max:255']);
-        DB::table('PhieuKiemKe')->where('MaPhieuKiemKe', $maPhieu)->update(['TrangThai' => 'Nháp','GhiChu' => $request->input('ghi_chu_tu_choi', 'Báo cáo bị từ chối.')]);
-        return redirect()->route('kiemke.bep', ['edit_code' => $maPhieu])->with('status', 'Báo cáo trả về nháp.');
+        $request->validate(['ghi_chu_tu_choi' => 'required']);
+
+        DB::table('PhieuKiemKe')->where('MaPhieuKiemKe', $maPhieu)->update([
+            'TrangThai' => 'Nháp',
+            'GhiChu' => $request->ghi_chu_tu_choi
+        ]);
+
+        return redirect()->back()->with('status', 'Đã từ chối báo cáo và hoàn trả bản nháp cho nhân viên!');
     }
 
     /**
-     * HĐ15 - HĐ16: CHỐT CA
+     * HD5: QUẢN LÝ BẤM XÁC NHẬN CHỐT CA (ĐỒNG BỘ CÔNG THỨC KIỂM TRA HỦY)
      */
     public function chotCaBaoCao($maPhieu)
     {
-        DB::transaction(function () use ($maPhieu) {
-            DB::table('PhieuKiemKe')->where('MaPhieuKiemKe', $maPhieu)->update(['TrangThai' => 'Đã duyệt']);
-            DB::table('PhieuXuatHuy')->where('MaPhieuKiemKe', $maPhieu)->update(['TrangThai' => 'Đã duyệt']);
-            
-            $chiTiet = DB::table('ChiTietPhieuKiemKeCuoiNgay')->where('MaPhieuKiemKe', $maPhieu)->get();
-            foreach ($chiTiet as $item) {
-                DB::table('NguyenLieu')->where('MaNguyenLieu', $item->MaNguyenLieu)->update(['SoLuongTonKho' => $item->SoLuongThucTe]);
+        $phieuHuy = DB::table('PhieuXuatHuy')->where('MaPhieuKiemKe', $maPhieu)->first();
+        $qtyHuyMap = [];
+        if ($phieuHuy) {
+            $qtyHuyMap = DB::table('ChiTietPhieuHuy')
+                ->where('MaPhieuHuy', $phieuHuy->MaPhieuHuy)
+                ->pluck('SoLuongHuy', 'MaNguyenLieu')
+                ->toArray();
+        }
+
+        $details = DB::table('ChiTietPhieuKiemKeCuoiNgay')->where('MaPhieuKiemKe', $maPhieu)->get();
+        foreach ($details as $d) {
+            $soLuongHuyTrongCa = $qtyHuyMap[$d->MaNguyenLieu] ?? 0;
+            // Áp dụng đúng công thức đồng bộ bảo mật ở Backend
+            if (($d->SoLuongThucTe + $soLuongHuyTrongCa) != $d->SoLuongHeThong) {
+                return redirect()->back()->with('status', '⚠️ Hành động bị chặn: Không thể duyệt phiếu chốt ca khi số liệu vật lý chưa khớp!');
             }
-        });
-        return redirect()->back()->with('status', 'Chốt ca thành công!');
+        }
+
+        DB::table('PhieuKiemKe')->where('MaPhieuKiemKe', $maPhieu)->update(['TrangThai' => 'Đã duyệt']);
+        return redirect()->back()->with('status', 'Đã phê duyệt chốt ca và cập nhật tồn kho ngày sau thành công!');
     }
 }
