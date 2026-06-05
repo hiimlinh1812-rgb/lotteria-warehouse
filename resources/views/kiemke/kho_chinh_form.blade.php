@@ -14,7 +14,7 @@
                         <th>Mã Lô Hàng</th>
                         <th>Tên Nguyên Liệu</th>
                         <th>Hạn Sử Dụng</th>
-                        <th>Cảnh Báo HSD (HĐ2)</th>
+                        <th>Cảnh Báo HSD </th>
                         <!-- ❌ NGHIÊN CỨU BLIND COUNTING: ĐÃ XÓA CỘT SỔ SÁCH HỆ THỐNG ĐỂ ÉP NHÂN VIÊN PHẢI ĐẾM THỰC TẾ -->
                         <th class="table-warning text-dark" style="width: 35%;">Số Lượng Thực Tế Đếm</th>
                     </tr>

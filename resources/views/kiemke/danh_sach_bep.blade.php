@@ -10,7 +10,7 @@
 @foreach($danhSachPhiu as $phiu)
     <div class="card shadow mb-5 border-0">
         <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-            <span>Mã Phiếu Kiểm: <strong class="text-warning font-monospace">{{ $phiu['MaPhieuKiemKe'] }}</strong> | Ngày Lập: {{ $phiu['NgayKiemKe'] }}</span>
+            <span>Mã Phiếu: <strong class="text-warning font-monospace">{{ $phiu['MaPhieuKiemKe'] }}</strong> | Ngày Lập: {{ $phiu['NgayKiemKe'] }}</span>
             <span class="badge {{ $phiu['TrangThai'] == 'Đã duyệt' ? 'bg-success' : ($phiu['TrangThai'] == 'Nháp' ? 'bg-danger' : 'bg-warning text-dark') }}">
                 Trạng thái: {{ $phiu['TrangThai'] }}
             </span>

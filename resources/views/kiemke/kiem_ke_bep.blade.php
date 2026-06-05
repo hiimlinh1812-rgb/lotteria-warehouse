@@ -3,7 +3,7 @@
 @section('content')
 <div class="card shadow border-0">
     <div class="card-header bg-warning text-danger text-center py-3">
-        <h3 class="mb-0 fw-bold">📊 LOTTERIA BÀ TRIỆU - PHÂN HỆ KIỂM KÊ BẾP</h3>
+        <h3 class="mb-0 fw-bold">📊 LOTTERIA BÀ TRIỆU - KIỂM KÊ CUỐI NGÀY</h3>
     </div>
     <div class="card-body">
         
@@ -41,7 +41,7 @@
                         <th>Tên Nguyên Liệu</th>
                         <th class="table-warning text-dark" style="width: 20%;">Số Lượng Hoàn Kho</th>
                         <th class="table-warning text-dark" style="width: 20%;">Số Lượng Hàng Hủy</th>
-                        <th class="table-warning text-dark" style="width: 30%;">Lý Do Tiêu Hủy (Bắt buộc nếu có lượng hủy)</th>
+                        <th class="table-warning text-dark" style="width: 30%;">Lý Do Tiêu Hủy </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -68,7 +68,7 @@
                 </tbody>
             </table>
             <div class="text-end mt-4">
-                <button type="submit" class="btn btn-danger px-5 fw-bold shadow-sm">Gửi Báo Cáo Chốt Ca Bếp</button>
+                <button type="submit" class="btn btn-danger px-5 fw-bold shadow-sm">Gửi Báo Cáo</button>
             </div>
         </form>
     </div>

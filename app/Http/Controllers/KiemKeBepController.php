@@ -50,6 +50,24 @@ class KiemKeBepController extends Controller
     {
         $maPhieuCu = $request->input('ma_phieu_cu');
         $requestKiemKe = $request->input('kiem_ke', []);
+        
+        // =========================================================================
+        // 🛠️ ĐÃ NÂNG CẤP THUẬT TOÁN: TÍNH TỔNG LƯỢNG ĐỂ CHẶN TUYỆT ĐỐI BẢN NHÁP RỖNG
+        // =========================================================================
+        $totalQuantity = 0;
+        foreach ($requestKiemKe as $maNL => $data) {
+            if (is_array($data)) {
+                $hoanKho = isset($data['hoan_kho']) ? (int)$data['hoan_kho'] : 0;
+                $hangHuy = isset($data['hang_huy']) ? (int)$data['hang_huy'] : 0;
+                $totalQuantity += ($hoanKho + $hangHuy);
+            }
+        }
+
+        if ($totalQuantity <= 0) {
+            return "<script>alert('Hành động bị chặn: Vui lòng điền đầy đủ thông tin số lượng hoàn kho hoặc hàng hủy trước khi bấm gửi báo cáo!'); window.location.href='" . route('kiemke.bep') . "';</script>";
+        }
+        // =========================================================================
+
         $maPhieuAct = '';
 
         if ($maPhieuCu) {
@@ -61,11 +79,14 @@ class KiemKeBepController extends Controller
             ]);
 
             foreach ($requestKiemKe as $maNL => $data) {
+                // ĐÃ ĐỒNG BỘ: Reset chênh lệch và trạng thái vận hành về ban đầu khi nộp lại bản nháp sửa đổi
                 DB::table('ChiTietPhieuKiemKeCuoiNgay')
                     ->where('MaPhieuKiemKe', $maPhieuAct)
                     ->where('MaNguyenLieu', $maNL)
                     ->update([
-                        'SoLuongThucTe' => $data['hoan_kho'] ?? 0
+                        'SoLuongThucTe' => $data['hoan_kho'] ?? 0,
+                        'ChenhLech' => 0,
+                        'TinhTrang' => 'Chờ đối soát'
                     ]);
             }
             
@@ -76,22 +97,23 @@ class KiemKeBepController extends Controller
             }
         } else {
             $maPhieuAct = 'PKK' . rand(1000, 9999);
+            
             DB::table('PhieuKiemKe')->insert([
                 'MaPhieuKiemKe' => $maPhieuAct,
                 'LoaiKiemKe' => 'Cuối ngày',
                 'NgayKiemKe' => now()->toDateString(),
-                'TrangThai' => 'Chờ duyệt'
+                'TrangThai' => 'Chờ duyệt',
+                'MaTaiKhoan' => Auth::id()
             ]);
 
             foreach ($requestKiemKe as $maNL => $data) {
                 DB::table('ChiTietPhieuKiemKeCuoiNgay')->insert([
                     'MaPhieuKiemKe' => $maPhieuAct,
                     'MaNguyenLieu' => $maNL,
-                    'TonDau' => 0, 
-                    'NhapTrongNgay' => 0,
-                    'XuatTrongNgay' => 0,
                     'SoLuongHeThong' => 0,
-                    'SoLuongThucTe' => $data['hoan_kho'] ?? 0
+                    'SoLuongThucTe' => $data['hoan_kho'] ?? 0,
+                    'ChenhLech' => 0,
+                    'TinhTrang' => 'Chờ đối soát'
                 ]);
             }
         }
@@ -127,11 +149,11 @@ class KiemKeBepController extends Controller
             }
         }
 
-        return "<script>alert('Gửi báo cáo cập nhật thành công! Đang chuyển hướng về Dashboard.'); window.location.href = '" . route('dashboard') . "';</script>";
+        return "<script>alert('Gửi báo cáo cập nhật thành công!'); window.location.href = '" . route('kiemke.bep') . "';</script>";
     }
 
     /**
-     * HD3: MÀN HÌNH QUẢN LÝ XEM ĐỐI SOÁT - ĐÃ CẬP NHẬT THUẬT TOÁN ĐỐI CHIẾU HÀNG HỦY TRỰC TIẾP
+     * HD3: MÀN HÌNH QUẢN LÝ XEM ĐỐI SOÁT
      */
     public function danhSachBaoCao()
     {
@@ -147,7 +169,6 @@ class KiemKeBepController extends Controller
                 ->where('MaPhieuKiemKe', $p->MaPhieuKiemKe)
                 ->get();
 
-            // ─── BƯỚC THAY ĐỔI VÀNG: Trích xuất mảng số lượng hàng hủy đính kèm trước để lập bản đồ tra cứu ───
             $phieuHuy = DB::table('PhieuXuatHuy')->where('MaPhieuKiemKe', $p->MaPhieuKiemKe)->first();
             $qtyHuyMap = [];
             $phieuHuyDetails = [];
@@ -181,11 +202,8 @@ class KiemKeBepController extends Controller
             $isFullyMatched = true; 
 
             foreach ($detailsRaw as $d) {
-                // Đọc lượng hàng hủy tương ứng của mặt hàng này từ bản đồ tra cứu dữ liệu
                 $soLuongHuyTrongCa = $qtyHuyMap[$d->MaNguyenLieu] ?? 0;
 
-                // ─── THAY ĐỔI CÔNG THỨC LOGIC THEO ĐÚNG Ý LINH VÀ NGHIỆP VỤ LOGISTICS ───
-                // Chênh lệch = (Thực tế đếm + Số lượng đã làm thủ tục hủy) - Sổ sách hệ thống
                 $chenhLech = ($d->SoLuongThucTe + $soLuongHuyTrongCa) - $d->SoLuongHeThong;
                 $tinhTrang = $chenhLech == 0 ? 'Khớp' : ($chenhLech > 0 ? 'Thừa hàng' : 'Thất thoát');
                 
@@ -196,9 +214,9 @@ class KiemKeBepController extends Controller
                 $details[] = [
                     'MaNguyenLieu' => $d->MaNguyenLieu,
                     'TenNguyenLieu' => $d->TenNguyenLieu,
-                    'TonDau' => $d->TonDau ?? 0,
-                    'Nhap' => $d->NhapTrongNgay ?? 0,
-                    'Xuat' => $d->XuatTrongNgay ?? 0,
+                    'TonDau' => $d->TonDau ?? 0,              
+                    'Nhap' => $d->NhapTrongNgay ?? 0,         
+                    'Xuat' => $d->XuatTrongNgay ?? 0,         
                     'SoLuongHeThong' => $d->SoLuongHeThong,
                     'SoLuongThucTe' => $d->SoLuongThucTe,
                     'ChenhLech' => $chenhLech,
@@ -237,7 +255,7 @@ class KiemKeBepController extends Controller
     }
 
     /**
-     * HD5: QUẢN LÝ BẤM XÁC NHẬN CHỐT CA (ĐỒNG BỘ CÔNG THỨC KIỂM TRA HỦY)
+     * HD5: QUẢN LÝ BẤM XÁC NHẬN CHỐT CA
      */
     public function chotCaBaoCao($maPhieu)
     {
@@ -253,7 +271,6 @@ class KiemKeBepController extends Controller
         $details = DB::table('ChiTietPhieuKiemKeCuoiNgay')->where('MaPhieuKiemKe', $maPhieu)->get();
         foreach ($details as $d) {
             $soLuongHuyTrongCa = $qtyHuyMap[$d->MaNguyenLieu] ?? 0;
-            // Áp dụng đúng công thức đồng bộ bảo mật ở Backend
             if (($d->SoLuongThucTe + $soLuongHuyTrongCa) != $d->SoLuongHeThong) {
                 return redirect()->back()->with('status', '⚠️ Hành động bị chặn: Không thể duyệt phiếu chốt ca khi số liệu vật lý chưa khớp!');
             }

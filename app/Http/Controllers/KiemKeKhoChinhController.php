@@ -187,13 +187,17 @@ class KiemKeKhoChinhController extends Controller
      */
     public function taoGiaiTrinh(Request $request, $maPhieu)
     {
-        $request->validate([
+       $request->validate([
             'noi_dung' => 'required|string|min:5',
             'nguyen_nhan' => 'required|string|min:5',
             'bang_chung' => 'required|string'
         ], [
             'noi_dung.required' => 'Vui lòng điền nội dung giải trình thất thoát!',
+            'noi_dung.min' => 'Nội dung giải trình phải nhập tối thiểu 5 ký tự trở lên!', // 🔥 ĐÃ THÊM MỚI
+            
             'nguyen_nhan.required' => 'Vui lòng nêu rõ nguyên nhân xảy ra chênh lệch!',
+            'nguyen_nhan.min' => 'Nguyên nhân thất thoát phải nhập tối thiểu 5 ký tự trở lên!', // 🔥 ĐÃ THÊM MỚI
+            
             'bang_chung.required' => 'Bắt buộc cung cấp bằng chứng liên quan phục vụ kiểm toán!'
         ]);
 
