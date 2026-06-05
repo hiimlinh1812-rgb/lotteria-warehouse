@@ -18,13 +18,7 @@ use App\Http\Controllers\XuatHuyController;
 use App\Http\Controllers\KiemKeBepController;
 use App\Http\Controllers\KiemKeKhoChinhController;
 
-Route::get('/', function () {
-    return view('welcome');
-});
-
-// ============================================================
-// 1. ĐĂNG NHẬP / ĐĂNG XUẤT HỆ THỐNG
-// ============================================================
+// 1. Đăng nhập/Đăng xuất
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/logout', function () {
@@ -60,7 +54,20 @@ Route::middleware(['auth', 'can:isCuaHangTruong'])->group(function () {
 // ============================================================
 Route::middleware(['auth', 'can:isQuanLy'])->group(function () {
     Route::get('/don-hang', [DonHangController::class, 'index'])->name('don-hang.index');
-    Route::get('/xuat-kho', [XuatKhoController::class, 'index'])->name('xuat-kho.index');
+
+    // --- BÊ CODE CỦA BẠN VÀO ĐÂY ---
+    Route::prefix('quan-ly')->group(function () {
+        // Màn hình danh sách phiếu xuất
+        Route::get('/phieu-xuat', [XuatKhoController::class, 'index'])->name('xuatkho.index');
+        // Màn hình khởi tạo yêu cầu xuất kho đầu ngày
+        Route::get('/tao-phieu-xuat', [XuatKhoController::class, 'create'])->name('xuatkho.create');
+        // Xử lý logic khi Quản lý bấm nút "Xác Nhận Xuất Kho"
+        Route::post('/tao-phieu-xuat', [XuatKhoController::class, 'store'])->name('xuatkho.store');
+        // Xử lý Xem Phiếu Xuất (Đã bỏ chữ /quan-ly dư thừa vì đã có prefix ở ngoài)
+        Route::get('/chi-tiet-phieu/{id}', [XuatKhoController::class, 'quanLyShow'])->name('quanly.chitiet');
+    });
+    // -------------------------------
+
     Route::get('/xuat-huy', [XuatHuyController::class, 'index'])->name('xuat-huy.index');
     Route::get('/kiem-ke', [KiemKeController::class, 'index'])->name('kiem-ke.index');
 
@@ -83,7 +90,18 @@ Route::middleware(['auth', 'can:isQuanLy'])->group(function () {
 // 5. NHÓM QUYỀN: NHÂN VIÊN (Lập phiếu báo cáo)
 // ============================================================
 Route::middleware(['auth', 'can:isNhanVien'])->group(function () {
-    Route::get('/phieu-xuat', [PhieuXuatController::class, 'index'])->name('phieu-xuat.index');
+
+    // --- BÊ CODE CỦA BẠN VÀO ĐÂY ---
+    Route::prefix('nhan-vien')->group(function () {
+        // Màn hình tiếp nhận danh sách phiếu chờ xuất
+        Route::get('/tiep-nhan-phieu', [XuatKhoController::class, 'nhanVienIndex'])->name('nhanvien.phieuxuat');
+        // Màn hình chi tiết để nhân viên điền số lượng thực lấy
+        Route::get('/chi-tiet-phieu/{id}', [XuatKhoController::class, 'show'])->name('nhanvien.chitiet');
+        // Xử lý logic trừ kho FIFO khi nhân viên bấm "Hoàn tất"
+        Route::post('/hoan-tat-phieu/{id}', [XuatKhoController::class, 'hoanTatXuatKho'])->name('nhanvien.hoantat');
+    });
+    // -------------------------------
+
     Route::get('/ds-don-hang', [DonHangNVController::class, 'index'])->name('ds-don-hang.index');
     Route::get('/kiem-ke-ngay', [KiemKeNgayController::class, 'index'])->name('kiem-ke-ngay.index');
     Route::get('/kiem-ke-dinh-ky', [KiemKeDinhKyController::class, 'index'])->name('kiem-ke-dinh-ky.index');

@@ -14,11 +14,11 @@ class NguyenLieu extends Model
 
     // Khai báo các cột được phép nhập dữ liệu
     protected $fillable = [
-        'MaNguyenLieu', 
-        'TenNguyenLieu', 
-        'DonViTinh', 
-        'NhomHang', 
-        'SoLuongTonKho', 
+        'MaNguyenLieu',
+        'TenNguyenLieu',
+        'DonViTinh',
+        'NhomHang',
+        'SoLuongTonKho',
         'MoTa'
     ];
 }
