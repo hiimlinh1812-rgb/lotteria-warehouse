@@ -47,12 +47,11 @@
             <div class="row g-3">
                 <div class="col-md-4">
                     <label for="NgayDat" class="form-label fw-semibold">Ngày đặt</label>
-                    <input id="NgayDat" type="date" name="NgayDat" class="form-control" value="{{ old('NgayDat', \Illuminate\Support\Carbon::parse($order->NgayDat)->toDateString()) }}" required>
+                    <input id="NgayDat" type="date" name="NgayDat" class="form-control" value="{{ old('NgayDat', \Illuminate\Support\Carbon::parse($order->NgayDat)->toDateString()) }}" readonly>
                 </div>
                 <div class="col-md-4">
                     <label for="MaTaiKhoan" class="form-label fw-semibold">Người lập đơn</label>
-                    <select id="MaTaiKhoan" name="MaTaiKhoan" class="form-select" required>
-                        <option value="">Chọn tài khoản</option>
+                    <select id="MaTaiKhoan" name="MaTaiKhoan" class="form-select" disabled>
                         @foreach ($accounts as $account)
                             <option value="{{ $account->MaTaiKhoan }}" {{ old('MaTaiKhoan', $order->MaTaiKhoan) == $account->MaTaiKhoan ? 'selected' : '' }}>
                                 {{ $account->MaTaiKhoan }} - {{ $account->HoTen }} ({{ $account->VaiTro }})
@@ -103,8 +102,8 @@
             </div>
 
             <div class="d-flex flex-wrap gap-2 mt-4">
-                <button class="btn btn-lotteria fw-bold" type="submit">Lưu thay đổi</button>
-                <a class="btn btn-outline-secondary" href="{{ route($routePrefix . '.show', $order->MaDonDatHang) }}">Quay lại</a>
+                <button id="save-btn" class="btn btn-lotteria fw-bold" type="submit" disabled>Lưu thay đổi</button>
+                <a class="btn btn-outline-secondary" href="{{ route($routePrefix . '.index') }}">Quay lại</a>
             </div>
         </div>
     </div>
@@ -140,6 +139,53 @@
         const ingredientOptionsElement = document.getElementById('ingredient-options-data');
         const ingredientOptions = JSON.parse(ingredientOptionsElement.textContent || '[]');
         let itemIndex = Number(itemsContainer.dataset.nextIndex || 0);
+        const saveBtn = document.getElementById('save-btn');
+        const form = document.querySelector('form');
+        let initialState = getCurrentState();
+
+        function getCurrentState() {
+            const state = {
+                ghiChu: document.getElementById('GhiChu').value,
+                items: []
+            };
+            const rows = itemsContainer.querySelectorAll('.item-row');
+            rows.forEach(row => {
+                const select = row.querySelector('select[name*="MaNguyenLieu"]');
+                const input = row.querySelector('input[name*="SoLuongDat"]');
+                if (select && input) {
+                    state.items.push({
+                        maNguyenLieu: select.value,
+                        soLuongDat: input.value
+                    });
+                }
+            });
+            return state;
+        }
+
+        function checkForChanges() {
+            const currentState = getCurrentState();
+            let changed = false;
+            
+            // Check GhiChu
+            if (currentState.ghiChu !== initialState.ghiChu) {
+                changed = true;
+            }
+            
+            // Check items
+            if (currentState.items.length !== initialState.items.length) {
+                changed = true;
+            } else {
+                for (let i = 0; i < currentState.items.length; i++) {
+                    if (currentState.items[i].maNguyenLieu !== initialState.items[i].maNguyenLieu ||
+                        currentState.items[i].soLuongDat !== initialState.items[i].soLuongDat) {
+                        changed = true;
+                        break;
+                    }
+                }
+            }
+
+            saveBtn.disabled = !changed;
+        }
 
         function renderIngredientOptions(select, selectedValue) {
             select.innerHTML = '';
@@ -176,6 +222,7 @@
             itemsContainer.appendChild(template);
             itemIndex++;
             itemsContainer.dataset.nextIndex = String(itemIndex);
+            checkForChanges();
         }
 
         function removeItemRow(button) {
@@ -183,9 +230,23 @@
             if (rows.length === 1) {
                 rows[0].querySelector('select').value = '';
                 rows[0].querySelector('input[type="number"]').value = 1;
-                return;
+            } else {
+                button.closest('.item-row').remove();
             }
-            button.closest('.item-row').remove();
+            checkForChanges();
         }
+
+        // Listen for changes
+        document.getElementById('GhiChu').addEventListener('input', checkForChanges);
+        itemsContainer.addEventListener('change', checkForChanges);
+        itemsContainer.addEventListener('input', checkForChanges);
+
+        // Form submit listener
+        form.addEventListener('submit', function(e) {
+            if (saveBtn.disabled) {
+                e.preventDefault();
+                alert('Bạn chưa thay đổi gì cả!');
+            }
+        });
     </script>
 @endsection

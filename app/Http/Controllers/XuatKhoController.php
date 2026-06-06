@@ -55,7 +55,21 @@ class XuatKhoController extends Controller
     {
         $request->validate([
             'nguyen_lieu' => 'required|array',
+        ], [
+            'nguyen_lieu.required' => 'Vui lòng chọn ít nhất một nguyên liệu để xuất kho.',
         ]);
+
+        // Check that at least one item has quantity > 0
+        $hasValidItem = false;
+        foreach ($request->input('nguyen_lieu', []) as $soLuong) {
+            if ($soLuong > 0) {
+                $hasValidItem = true;
+                break;
+            }
+        }
+        if (!$hasValidItem) {
+            return back()->withErrors(['error' => 'Vui lòng nhập số lượng lớn hơn 0 cho ít nhất một nguyên liệu.']);
+        }
 
         DB::beginTransaction();
         try {
@@ -173,6 +187,8 @@ class XuatKhoController extends Controller
     {
         $request->validate([
             'thuc_lay' => 'required|array',
+        ], [
+            'thuc_lay.required' => 'Vui lòng điền số lượng thực lấy cho các nguyên liệu.',
         ]);
 
         DB::beginTransaction();

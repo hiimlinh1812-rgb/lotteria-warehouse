@@ -18,6 +18,7 @@
                         <th>Mã đơn</th>
                         <th>Ngày đặt</th>
                         <th>Người tạo</th>
+                        <th>Trạng thái</th>
                         <th>Số mặt hàng</th>
                         <th>Tổng số lượng</th>
                         <th class="text-end">Thao tác</th>
@@ -29,6 +30,7 @@
                             <td class="fw-bold">{{ $order->MaDonDatHang }}</td>
                             <td>{{ \Illuminate\Support\Carbon::parse($order->NgayDat)->format('d/m/Y') }}</td>
                             <td>{{ $order->HoTen }}</td>
+                            <td><x-status-badge :status="$order->TrangThai" /></td>
                             <td>{{ $order->SoMatHang }}</td>
                             <td>{{ $order->TongSoLuong }}</td>
                             <td class="text-end">
@@ -37,7 +39,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center text-muted py-4">
+                            <td colspan="7" class="text-center text-muted py-4">
                                 Không có đơn hàng nào cần nhận.
                             </td>
                         </tr>

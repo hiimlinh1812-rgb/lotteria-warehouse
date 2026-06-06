@@ -7,8 +7,9 @@ use Illuminate\Support\Facades\DB;
 
 class DonHangNVController extends Controller
 {
-    private const STATUS_WAITING_RECEIVE = 'Cho xu ly';
-    private const STATUS_RECEIVED = 'Da nhan hang';
+    private const STATUS_WAITING_RECEIVE = 'Chờ nhận hàng';
+    private const STATUS_RECEIVED = 'Đã nhận hàng';
+    private const STATUS_WAITING_PROCESS = 'Chờ xử lý';
 
     public function index()
     {
@@ -32,7 +33,7 @@ class DonHangNVController extends Controller
         return view('nhanvien.ds-don-hang', compact('orders'));
     }
 
-    public function show($order)
+    public function show(string $order)
     {
         $orderData = DB::table('DonDatHang as d')
             ->join('TaiKhoan as t', 't.MaTaiKhoan', '=', 'd.MaTaiKhoan')
@@ -51,7 +52,7 @@ class DonHangNVController extends Controller
         return view('nhanvien.tao-phieu-nhan-hang', compact('orderData', 'items'));
     }
 
-    public function store(Request $request, $order)
+    public function store(Request $request, string $order)
     {
         $request->validate([
             'NgayNhan' => 'required|date',
@@ -138,7 +139,7 @@ class DonHangNVController extends Controller
                     'MaDonDatHang' => $order,
                     'HanhDong' => 'Nhận hàng',
                     'TrangThaiTruoc' => $currentStatus,
-                    'TrangThaiSau' => $totalSoLuongDat == $totalSoLuongThucNhan ? self::STATUS_RECEIVED : self::STATUS_WAITING_RECEIVE,
+                    'TrangThaiSau' => $totalSoLuongDat == $totalSoLuongThucNhan ? self::STATUS_RECEIVED : self::STATUS_WAITING_PROCESS,
                     'MaTaiKhoan' => auth()->user()->MaTaiKhoan,
                     'NoiDung' => $request->GhiChu ?? 'Nhân viên tạo phiếu nhận hàng',
                     'created_at' => now(),
@@ -147,7 +148,7 @@ class DonHangNVController extends Controller
             }
 
             // Cập nhật trạng thái đơn hàng
-            $trangThaiMoi = $totalSoLuongDat == $totalSoLuongThucNhan ? self::STATUS_RECEIVED : self::STATUS_WAITING_RECEIVE;
+            $trangThaiMoi = $totalSoLuongDat == $totalSoLuongThucNhan ? self::STATUS_RECEIVED : self::STATUS_WAITING_PROCESS;
             DB::table('DonDatHang')
                 ->where('MaDonDatHang', $order)
                 ->update(['TrangThai' => $trangThaiMoi]);
@@ -171,9 +172,6 @@ class DonHangNVController extends Controller
     {
         return [
             self::STATUS_WAITING_RECEIVE,
-            'Chờ xử lý',
-            'Chờ nhận hàng',
-            'Đang xử lý đổi/trả',
         ];
     }
 }

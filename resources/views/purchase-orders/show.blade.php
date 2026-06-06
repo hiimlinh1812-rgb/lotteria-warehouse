@@ -8,24 +8,21 @@
     $currentUser = auth()->user();
     $managerMode = request()->routeIs('don-hang.*') && $isManagerUser;
     $routePrefix = $managerMode ? 'don-hang' : 'purchase-orders';
-    $statusClass = match ($order->TrangThai) {
-        'Cho phe duyet' => 'pending',
-        'Dang xu ly' => 'processing',
-        'Cho xu ly' => 'processing',
-        'Dang doi tra' => 'processing',
-        'Da duyet' => 'approved',
-        'Da nhan hang' => 'received',
-        'Da nhap kho' => 'stocked',
-        'Tu choi' => 'rejected',
-        'Da huy' => 'cancelled',
-        default => '',
-    };
-    $canApprove = $isStoreChiefUser && $order->TrangThai === 'Cho phe duyet';
-    $canEdit = $isManagerUser && $order->TrangThai === 'Cho phe duyet';
-    $canProcess = false;
-    $canCancel = $isManagerUser && $order->TrangThai === 'Cho phe duyet';
-    $canStock = $isManagerUser && $order->TrangThai === 'Da nhan hang';
-    $canReturn = $isManagerUser && $order->TrangThai === 'Cho xu ly';
+    $statusLabels = [
+        'Chờ phê duyệt' => 'Chờ phê duyệt',
+        'Chờ nhận hàng' => 'Chờ nhận hàng',
+        'Đã nhận hàng' => 'Đã nhận hàng',
+        'Chờ xử lý' => 'Chờ xử lý',
+        'Đang đổi trả' => 'Đang đổi trả',
+        'Đã nhập kho' => 'Đã nhập kho',
+        'Từ chối' => 'Từ chối',
+        'Đã hủy' => 'Đã hủy',
+    ];
+    $canApprove = $isStoreChiefUser && $order->TrangThai === 'Chờ phê duyệt';
+    $canEdit = $isManagerUser && $order->TrangThai === 'Chờ phê duyệt';
+    $canCancel = $isManagerUser && $order->TrangThai === 'Chờ phê duyệt';
+    $canStock = $isManagerUser && $order->TrangThai === 'Đã nhận hàng';
+    $canReturn = $isManagerUser && $order->TrangThai === 'Chờ xử lý';
     $totalReceived = collect($reconciliationItems)->sum('SoLuongNhan');
 @endphp
 
@@ -42,10 +39,10 @@
         @if (! $managerMode && $canEdit)
             <a class="btn btn-outline-primary" href="{{ route('purchase-orders.edit', $order->MaDonDatHang) }}">Sửa đơn</a>
         @endif
-        @if ($managerMode && $order->TrangThai === 'Cho xu ly')
+        @if ($managerMode && $order->TrangThai === 'Chờ xử lý')
             <a class="btn btn-outline-danger" href="{{ route('don-hang.return.create', $order->MaDonDatHang) }}">Đổi trả</a>
         @endif
-        @if ($managerMode && $order->TrangThai === 'Da nhan hang')
+        @if ($managerMode && $order->TrangThai === 'Đã nhận hàng')
             <a class="btn btn-success" href="{{ route('don-hang.stock.create', $order->MaDonDatHang) }}">Nhập kho</a>
         @endif
     </div>
@@ -58,7 +55,7 @@
                 <div class="row g-3">
                     <div class="col-md-4">
                         <div class="text-muted small text-uppercase fw-semibold">Trạng thái</div>
-                        <span class="status-badge {{ $statusClass }}">{{ $statusLabels[$order->TrangThai] ?? $order->TrangThai }}</span>
+                        <x-status-badge :status="$order->TrangThai" />
                     </div>
                     <div class="col-md-4">
                         <div class="text-muted small text-uppercase fw-semibold">Người lập</div>

@@ -8,30 +8,15 @@
     $managerMode = request()->routeIs('don-hang.*');
     $routePrefix = $managerMode ? 'don-hang' : 'purchase-orders';
     $statusLabels = [
-        'Cho phe duyet' => 'Chờ phê duyệt',
-        'Dang xu ly' => 'Đang xử lý',
-        'Cho xu ly' => 'Chờ xử lý',
-        'Dang doi tra' => 'Đang đổi trả',
-        'Da duyet' => 'Đã duyệt',
-        'Tu choi' => 'Từ chối',
-        'Da huy' => 'Đã hủy',
-        'Da nhan hang' => 'Đã nhận hàng',
-        'Da nhap kho' => 'Đã nhập kho',
+        'Chờ phê duyệt' => 'Chờ phê duyệt',
+        'Chờ nhận hàng' => 'Chờ nhận hàng',
+        'Chờ xử lý' => 'Chờ xử lý',
+        'Đang đổi trả' => 'Đang đổi trả',
+        'Từ chối' => 'Từ chối',
+        'Đã hủy' => 'Đã hủy',
+        'Đã nhận hàng' => 'Đã nhận hàng',
+        'Đã nhập kho' => 'Đã nhập kho',
     ];
-    $statusClass = function (?string $status) {
-        return match ($status) {
-            'Cho phe duyet' => 'pending',
-            'Dang xu ly' => 'processing',
-            'Cho xu ly' => 'processing',
-            'Dang doi tra' => 'processing',
-            'Da duyet' => 'approved',
-            'Da nhan hang' => 'received',
-            'Da nhap kho' => 'stocked',
-            'Tu choi' => 'rejected',
-            'Da huy' => 'cancelled',
-            default => '',
-        };
-    };
     $sortIcon = function (string $column) use ($sort, $direction) {
         if ($sort !== $column) {
             return '↕';
@@ -67,7 +52,7 @@
             <div class="card page-card summary-tile h-100">
                 <div class="card-body">
                     <div class="text-muted fw-semibold">Chờ phê duyệt</div>
-                    <div class="display-6 fw-bold text-warning-emphasis">{{ $managerSummary['Cho phe duyet'] ?? 0 }}</div>
+                    <div class="display-6 fw-bold text-warning-emphasis">{{ $managerSummary['Chờ phê duyệt'] ?? 0 }}</div>
                 </div>
             </div>
         </div>
@@ -75,7 +60,7 @@
             <div class="card page-card summary-tile h-100">
                 <div class="card-body">
                     <div class="text-muted fw-semibold">Chờ xử lý</div>
-                    <div class="display-6 fw-bold text-primary">{{ $managerSummary['Cho xu ly'] ?? 0 }}</div>
+                    <div class="display-6 fw-bold text-primary">{{ $managerSummary['Chờ xử lý'] ?? 0 }}</div>
                 </div>
             </div>
         </div>
@@ -83,7 +68,7 @@
             <div class="card page-card summary-tile h-100">
                 <div class="card-body">
                     <div class="text-muted fw-semibold">Đã nhận hàng</div>
-                    <div class="display-6 fw-bold text-success">{{ $managerSummary['Da nhan hang'] ?? 0 }}</div>
+                    <div class="display-6 fw-bold text-success">{{ $managerSummary['Đã nhận hàng'] ?? 0 }}</div>
                 </div>
             </div>
         </div>
@@ -91,7 +76,7 @@
             <div class="card page-card summary-tile h-100">
                 <div class="card-body">
                     <div class="text-muted fw-semibold">Đã nhập kho</div>
-                    <div class="display-6 fw-bold text-info-emphasis">{{ $managerSummary['Da nhap kho'] ?? 0 }}</div>
+                    <div class="display-6 fw-bold text-info-emphasis">{{ $managerSummary['Đã nhập kho'] ?? 0 }}</div>
                 </div>
             </div>
         </div>
@@ -102,7 +87,7 @@
             <div class="card page-card summary-tile h-100">
                 <div class="card-body">
                     <div class="text-muted fw-semibold">Chờ phê duyệt</div>
-                    <div class="display-6 fw-bold text-warning-emphasis">{{ $summaryCards['Cho phe duyet'] ?? 0 }}</div>
+                    <div class="display-6 fw-bold text-warning-emphasis">{{ $summaryCards['Chờ phê duyệt'] ?? 0 }}</div>
                 </div>
             </div>
         </div>
@@ -110,7 +95,7 @@
             <div class="card page-card summary-tile h-100">
                 <div class="card-body">
                     <div class="text-muted fw-semibold">Đã duyệt</div>
-                    <div class="display-6 fw-bold text-success">{{ $summaryCards['Da duyet'] ?? 0 }}</div>
+                    <div class="display-6 fw-bold text-success">{{ $summaryCards['Chờ nhận hàng'] ?? 0 }}</div>
                 </div>
             </div>
         </div>
@@ -118,7 +103,7 @@
             <div class="card page-card summary-tile h-100">
                 <div class="card-body">
                     <div class="text-muted fw-semibold">Từ chối / Hủy</div>
-                    <div class="display-6 fw-bold text-danger">{{ ($summaryCards['Tu choi'] ?? 0) + ($summaryCards['Da huy'] ?? 0) }}</div>
+                    <div class="display-6 fw-bold text-danger">{{ ($summaryCards['Từ chối'] ?? 0) + ($summaryCards['Đã hủy'] ?? 0) }}</div>
                 </div>
             </div>
         </div>
@@ -173,13 +158,13 @@
                             <td class="fw-bold">{{ $order->MaDonDatHang }}</td>
                             <td>{{ \Illuminate\Support\Carbon::parse($order->NgayDat)->format('d/m/Y') }}</td>
                             <td>{{ $order->HoTen }}</td>
-                            <td><span class="status-badge {{ $statusClass($order->TrangThai) }}">{{ $statusLabels[$order->TrangThai] ?? $order->TrangThai }}</span></td>
+                            <td><x-status-badge :status="$order->TrangThai" /></td>
                             <td>{{ $order->SoMatHang }}</td>
                             <td>{{ number_format($order->TongSoLuong) }}</td>
                             <td>{{ $order->GhiChu ?: '-' }}</td>
                             <td class="text-end">
                                 @if ($managerMode)
-                                    @if ($order->TrangThai === 'Cho phe duyet')
+                                    @if ($order->TrangThai === 'Chờ phê duyệt')
                                         <div class="d-inline-flex flex-wrap justify-content-end gap-2">
                                             <a class="btn btn-sm btn-outline-primary" href="{{ route($routePrefix . '.edit', $order->MaDonDatHang) }}">Sửa</a>
                                             <form method="post" action="{{ route($routePrefix . '.cancel', $order->MaDonDatHang) }}" onsubmit="return confirm('Bạn có chắc muốn hủy đơn này không?');">
@@ -187,30 +172,26 @@
                                                 <button class="btn btn-sm btn-outline-danger" type="submit">Hủy</button>
                                             </form>
                                         </div>
-                                    @elseif ($order->TrangThai === 'Cho xu ly')
+                                    @elseif (in_array($order->TrangThai, ['Chờ nhận hàng', 'Từ chối', 'Đang đổi trả', 'Đã nhập kho']))
+                                        <div class="d-inline-flex flex-wrap justify-content-end gap-2">
+                                            <a class="btn btn-sm btn-outline-secondary" href="{{ route('don-hang.show', $order->MaDonDatHang) }}">Xem lịch sử/chi tiết</a>
+                                        </div>
+                                    @elseif ($order->TrangThai === 'Chờ xử lý')
                                         <div class="d-inline-flex flex-wrap justify-content-end gap-2">
                                             <a class="btn btn-sm btn-outline-primary" href="{{ route('don-hang.show', $order->MaDonDatHang) }}">Xem</a>
                                             <a class="btn btn-sm btn-outline-danger" href="{{ route('don-hang.return.create', $order->MaDonDatHang) }}">Đổi trả</a>
                                         </div>
-                                    @elseif ($order->TrangThai === 'Dang doi tra')
-                                        <div class="d-inline-flex flex-wrap justify-content-end gap-2">
-                                            <a class="btn btn-sm btn-outline-secondary" href="{{ route('don-hang.show', $order->MaDonDatHang) }}">Xem lịch sử/chi tiết</a>
-                                        </div>
-                                    @elseif ($order->TrangThai === 'Da nhan hang')
+                                    @elseif ($order->TrangThai === 'Đã nhận hàng')
                                         <div class="d-inline-flex flex-wrap justify-content-end gap-2">
                                             <a class="btn btn-sm btn-outline-primary" href="{{ route('don-hang.show', $order->MaDonDatHang) }}">Xem</a>
                                             <a class="btn btn-sm btn-success" href="{{ route('don-hang.stock.create', $order->MaDonDatHang) }}">Nhập kho</a>
-                                        </div>
-                                    @elseif ($order->TrangThai === 'Da nhap kho')
-                                        <div class="d-inline-flex flex-wrap justify-content-end gap-2">
-                                            <a class="btn btn-sm btn-outline-secondary" href="{{ route('don-hang.show', $order->MaDonDatHang) }}">Xem lịch sử/chi tiết</a>
                                         </div>
                                     @else
                                         <span class="text-muted small">Không có thao tác</span>
                                     @endif
                                 @elseif ($isStoreChiefUser)
                                     <div class="d-inline-flex flex-wrap justify-content-end gap-2">
-                                        @if ($order->TrangThai === 'Cho phe duyet')
+                                        @if ($order->TrangThai === 'Chờ phê duyệt')
                                             <a class="btn btn-sm btn-outline-primary" href="{{ route('purchase-orders.show', $order->MaDonDatHang) }}">Xem & duyệt</a>
                                         @else
                                             <a class="btn btn-sm btn-outline-secondary" href="{{ route('purchase-orders.show', $order->MaDonDatHang) }}">Xem lịch sử/chi tiết</a>
@@ -219,18 +200,18 @@
                                 @else
                                     <div class="d-inline-flex flex-wrap justify-content-end gap-2">
                                         <a class="btn btn-sm btn-outline-secondary" href="{{ route('purchase-orders.show', $order->MaDonDatHang) }}">Chi tiết</a>
-                                        @if ($order->TrangThai === 'Cho phe duyet')
+                                        @if ($order->TrangThai === 'Chờ phê duyệt')
                                             <a class="btn btn-sm btn-outline-primary" href="{{ route('purchase-orders.edit', $order->MaDonDatHang) }}">Sửa</a>
                                             <form method="post" action="{{ route('purchase-orders.cancel', $order->MaDonDatHang) }}" onsubmit="return confirm('Bạn có chắc muốn hủy đơn này không?');">
                                                 @csrf
                                                 <button class="btn btn-sm btn-outline-danger" type="submit">Hủy đơn</button>
                                             </form>
-                                        @elseif ($order->TrangThai === 'Da duyet')
+                                        @elseif ($order->TrangThai === 'Chờ nhận hàng')
                                             <form method="post" action="{{ route('purchase-orders.receive', $order->MaDonDatHang) }}">
                                                 @csrf
                                                 <button class="btn btn-sm btn-outline-success" type="submit">Nhận hàng</button>
                                             </form>
-                                        @elseif ($order->TrangThai === 'Da nhan hang')
+                                        @elseif ($order->TrangThai === 'Đã nhận hàng')
                                             <form method="post" action="{{ route('purchase-orders.stock', $order->MaDonDatHang) }}">
                                                 @csrf
                                                 <button class="btn btn-sm btn-success" type="submit">Nhập kho</button>

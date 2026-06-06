@@ -4,21 +4,25 @@
 --}}
 @php
     $map = [
-        'Chờ nhận hàng'         => ['class' => 'badge-info',    'icon' => '🕐'],
-        'Đã nhận hàng'          => ['class' => 'badge-success', 'icon' => '✔'],
-        'Chờ xử lý'             => ['class' => 'badge-warning', 'icon' => '⚠'],
-        'Đang xử lý đổi/trả'   => ['class' => 'badge-red',     'icon' => '🔄'],
-        'Hoàn tất'              => ['class' => 'badge-success', 'icon' => '✅'],
-        'Đang xử lý'            => ['class' => 'badge-warning', 'icon' => '⏳'],
-        'Đã xử lý'              => ['class' => 'badge-success', 'icon' => '✔'],
-        'Chờ nhập'              => ['class' => 'badge-info',    'icon' => '📦'],
-        'Đã nhập'               => ['class' => 'badge-success', 'icon' => '✔'],
-        'Còn hạn'               => ['class' => 'badge-success', 'icon' => '✔'],
-        'Cận hạn'               => ['class' => 'badge-warning', 'icon' => '⚠'],
-        'Hết hạn'               => ['class' => 'badge-danger',  'icon' => '✖'],
-        'Đổi hàng'              => ['class' => 'badge-warning', 'icon' => '🔄'],
-        'Trả hàng'              => ['class' => 'badge-red',     'icon' => '↩'],
+        'Chờ phê duyệt' => ['class' => 'pending', 'icon' => '📋'],
+        'Từ chối' => ['class' => 'rejected', 'icon' => '❌'],
+        'Đã hủy' => ['class' => 'cancelled', 'icon' => '🚫'],
+        'Chờ nhận hàng' => ['class' => 'approved', 'icon' => '🕐'],
+        'Đã nhận hàng' => ['class' => 'received', 'icon' => '✔'],
+        'Chờ xử lý' => ['class' => 'processing', 'icon' => '⚠'],
+        'Đang đổi trả' => ['class' => 'processing', 'icon' => '🔄'],
+        'Đã nhập kho' => ['class' => 'stocked', 'icon' => '📥'],
+        'Hoàn tất' => ['class' => 'received', 'icon' => '✅'],
+        'Đang xử lý' => ['class' => 'processing', 'icon' => '⏳'],
+        'Đã xử lý' => ['class' => 'stocked', 'icon' => '✔'],
+        'Chờ nhập' => ['class' => 'pending', 'icon' => '📦'],
+        'Đã nhập' => ['class' => 'stocked', 'icon' => '✔'],
+        'Còn hạn' => ['class' => 'received', 'icon' => '✔'],
+        'Cận hạn' => ['class' => 'processing', 'icon' => '⚠'],
+        'Hết hạn' => ['class' => 'rejected', 'icon' => '✖'],
+        'Đổi hàng' => ['class' => 'processing', 'icon' => '🔄'],
+        'Trả hàng' => ['class' => 'rejected', 'icon' => '↩'],
     ];
-    $cfg = $map[$status] ?? ['class' => 'badge-gray', 'icon' => '–'];
+    $cfg = $map[$status] ?? ['class' => 'pending', 'icon' => '–'];
 @endphp
-<span class="badge {{ $cfg['class'] }}">{{ $cfg['icon'] }} {{ $status }}</span>
+<span class="status-badge {{ $cfg['class'] }}">{{ $cfg['icon'] }} {{ $status }}</span>

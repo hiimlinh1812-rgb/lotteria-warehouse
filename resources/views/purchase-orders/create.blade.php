@@ -29,14 +29,13 @@
             <div class="row g-3">
                 <div class="col-md-4">
                     <label for="NgayDat" class="form-label fw-semibold">Ngày đặt</label>
-                    <input id="NgayDat" type="date" name="NgayDat" class="form-control" value="{{ old('NgayDat', now()->toDateString()) }}" required>
+                    <input id="NgayDat" type="date" name="NgayDat" class="form-control" value="{{ old('NgayDat', now()->toDateString()) }}" readonly>
                 </div>
                 <div class="col-md-4">
                     <label for="MaTaiKhoan" class="form-label fw-semibold">Người lập đơn</label>
-                    <select id="MaTaiKhoan" name="MaTaiKhoan" class="form-select" required>
-                        <option value="">Chọn tài khoản</option>
+                    <select id="MaTaiKhoan" name="MaTaiKhoan" class="form-select" disabled>
                         @foreach ($accounts as $account)
-                            <option value="{{ $account->MaTaiKhoan }}" {{ $selectedAccount === (string) $account->MaTaiKhoan ? 'selected' : '' }}>
+                            <option value="{{ $account->MaTaiKhoan }}" {{ auth()->user()->MaTaiKhoan === $account->MaTaiKhoan ? 'selected' : '' }}>
                                 {{ $account->MaTaiKhoan }} - {{ $account->HoTen }} ({{ $account->VaiTro }})
                             </option>
                         @endforeach
