@@ -24,7 +24,7 @@
                     <div class="row g-3">
                         <div class="col-md-4">
                             <label for="NgayNhan" class="form-label fw-semibold">Ngày nhận</label>
-                            <input id="NgayNhan" name="NgayNhan" type="date" class="form-control" value="{{ old('NgayNhan') }}" data-default-today="true" required>
+                            <input id="NgayNhan" name="NgayNhan" type="date" class="form-control bg-light" value="{{ old('NgayNhan') }}" data-default-today="true" readonly required style="pointer-events: none;" tabindex="-1">
                         </div>
                         <div class="col-md-8">
                             <label for="GhiChu" class="form-label fw-semibold">Ghi chú</label>
