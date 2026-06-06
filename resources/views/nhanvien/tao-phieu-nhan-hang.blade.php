@@ -14,6 +14,16 @@
 <form method="post" action="{{ route('ds-don-hang.store', $orderData->MaDonDatHang) }}">
     @csrf
 
+    @if ($errors->any())
+        <div class="alert alert-danger shadow-sm mb-4">
+            <ul class="mb-0">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <div class="row">
         <div class="col-lg-12 mb-4">
             <div class="card page-card">
@@ -146,10 +156,6 @@
                         if (nsxValue >= hsdValue) {
                             hsdInput.setCustomValidity('Ngày sản xuất phải nhỏ hơn Hạn sử dụng');
                         }
-                    
-                    if (hsdValue <= todayStr) {
-                        hsdInput.setCustomValidity('Hạn sử dụng phải lớn hơn ngày hiện tại của máy tính người dùng');
-                    }
                 }
             }
         }

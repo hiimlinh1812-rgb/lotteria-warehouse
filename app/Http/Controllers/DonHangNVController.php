@@ -60,10 +60,10 @@ class DonHangNVController extends Controller
             'items' => 'required|array|min:1',
             'items.*.SoLuongThucNhan' => 'required|integer|min:0',
             'items.*.NgaySanXuat' => 'required|date|before_or_equal:today',
-            'items.*.HanSuDung' => 'required|date|after:items.*.NgaySanXuat|after:today',
+            'items.*.HanSuDung' => 'required|date|after:items.*.NgaySanXuat',
         ], [
             'items.*.NgaySanXuat.before_or_equal' => 'Ngày sản xuất không được lớn hơn ngày hiện tại.',
-            'items.*.HanSuDung.after' => 'Hạn sử dụng phải lớn hơn Ngày sản xuất và phải lớn hơn ngày hiện tại.',
+            'items.*.HanSuDung.after' => 'Hạn sử dụng phải lớn hơn Ngày sản xuất.',
         ]);
 
         $currentStatus = DB::table('DonDatHang')->where('MaDonDatHang', $order)->value('TrangThai');
@@ -91,6 +91,7 @@ class DonHangNVController extends Controller
 
             $totalSoLuongDat = 0;
             $totalSoLuongThucNhan = 0;
+            $hasExpiredItem = false;
 
             // Lưu thông tin lô hàng
             foreach ($request->items as $item) {
@@ -110,11 +111,12 @@ class DonHangNVController extends Controller
                 $maLoHang = 'LH' . str_pad($loHangNumber, 3, '0', STR_PAD_LEFT);
 
                 // Xác định trạng thái lô hàng
-                $ngayHienTai = now();
-                $hanSuDung = \Illuminate\Support\Carbon::parse($item['HanSuDung']);
+                $ngayHienTai = now()->startOfDay();
+                $hanSuDung = \Illuminate\Support\Carbon::parse($item['HanSuDung'])->startOfDay();
                 $trangThai = 'Còn hạn';
-                if ($hanSuDung->isPast()) {
+                if ($hanSuDung->isBefore($ngayHienTai)) {
                     $trangThai = 'Hết hạn';
+                    $hasExpiredItem = true;
                 } elseif ($hanSuDung->diffInDays($ngayHienTai) <= 15) {
                     $trangThai = 'Sắp hết hạn';
                 }
@@ -136,15 +138,19 @@ class DonHangNVController extends Controller
                     ->increment('SoLuongTonKho', $item['SoLuongThucNhan']);
             }
 
+            // Xác định trạng thái mới của đơn hàng
+            $isFullyReceived = ($totalSoLuongDat == $totalSoLuongThucNhan);
+            $trangThaiMoi = ($isFullyReceived && !$hasExpiredItem) ? self::STATUS_RECEIVED : self::STATUS_WAITING_PROCESS;
+
             // Lưu lịch sử truy vết (nếu có bảng)
             if (DB::getSchemaBuilder()->hasTable('TruyVetDonDatHang')) {
                 DB::table('TruyVetDonDatHang')->insert([
                     'MaDonDatHang' => $order,
                     'HanhDong' => 'Nhận hàng',
                     'TrangThaiTruoc' => $currentStatus,
-                    'TrangThaiSau' => $totalSoLuongDat == $totalSoLuongThucNhan ? self::STATUS_RECEIVED : self::STATUS_WAITING_PROCESS,
+                    'TrangThaiSau' => $trangThaiMoi,
                     'MaTaiKhoan' => auth()->user()->MaTaiKhoan,
-                    'NoiDung' => $request->GhiChu ?? 'Nhân viên tạo phiếu nhận hàng',
+                    'NoiDung' => $request->GhiChu ?? 'Nhân viên tạo phiếu nhận hàng' . ($hasExpiredItem ? ' (Có hàng hết hạn)' : ''),
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
@@ -158,12 +164,21 @@ class DonHangNVController extends Controller
 
             DB::commit();
 
-            if ($totalSoLuongDat == $totalSoLuongThucNhan) {
+            if ($trangThaiMoi === self::STATUS_RECEIVED) {
                 return redirect()->route('ds-don-hang.index')
                     ->with('success', 'Tạo phiếu nhận hàng thành công! Đơn hàng đã chuyển trạng thái Đã nhận hàng.');
             } else {
+                $msg = 'Tạo phiếu nhận hàng thành công! ';
+                if ($hasExpiredItem) {
+                    $msg .= 'Phát hiện nguyên liệu đã hết hạn sử dụng. ';
+                }
+                if (!$isFullyReceived) {
+                    $msg .= 'Số lượng thực nhận khác số lượng đặt. ';
+                }
+                $msg .= 'Đơn hàng chuyển trạng thái Chờ xử lý.';
+
                 return redirect()->route('ds-don-hang.index')
-                    ->with('warning', 'Tạo phiếu nhận hàng thành công! Số lượng thực nhận khác số lượng đặt. Đơn hàng chuyển trạng thái Chờ xử lý.');
+                    ->with('warning', $msg);
             }
         } catch (\Exception $e) {
             DB::rollBack();

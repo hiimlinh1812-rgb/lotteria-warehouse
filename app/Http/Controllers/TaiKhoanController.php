@@ -40,17 +40,21 @@ class TaiKhoanController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'HoTen' => 'required',
-            'SoDienThoai' => 'required|unique:TaiKhoan,SoDienThoai|digits:10',
-            'MatKhau' => 'required|min:6',
-            'VaiTro' => 'required',
+            'HoTen' => 'required|string|max:100',
+            'SoDienThoai' => 'required|string|regex:/^0[0-9]{9}$/|unique:TaiKhoan,SoDienThoai',
+            'MatKhau' => 'required|string|min:6',
+            'VaiTro' => 'required|string',
+        ], [
+            'SoDienThoai.regex' => 'Số điện thoại phải bắt đầu bằng số 0 và có đúng 10 chữ số.',
+            'SoDienThoai.unique' => 'Số điện thoại này đã được sử dụng.',
+            'MatKhau.min' => 'Mật khẩu phải có ít nhất 6 ký tự.',
         ]);
 
         $prefix = self::ROLE_PREFIXES[$request->VaiTro] ?? 'TK';
 
         $lastUser = TaiKhoan::where('MaTaiKhoan', 'like', $prefix . '%')
-                            ->orderBy('MaTaiKhoan', 'desc')
-                            ->first();
+            ->orderBy('MaTaiKhoan', 'desc')
+            ->first();
 
         $number = $lastUser ? (int)substr($lastUser->MaTaiKhoan, strlen($prefix)) + 1 : 1;
         $newId = $prefix . str_pad($number, 3, '0', STR_PAD_LEFT);
@@ -89,9 +93,21 @@ class TaiKhoanController extends Controller
     public function update(Request $request, string $MaTaiKhoan)
     {
         $taiKhoan = TaiKhoan::findOrFail($MaTaiKhoan);
-        
+
+        $request->validate([
+            'HoTen' => 'required|string|max:100',
+            'SoDienThoai' => 'required|string|regex:/^0[0-9]{9}$/|unique:TaiKhoan,SoDienThoai,' . $MaTaiKhoan . ',MaTaiKhoan',
+            'MatKhau' => 'nullable|string|min:6',
+            'VaiTro' => 'required|string',
+        ], [
+            'SoDienThoai.regex' => 'Số điện thoại phải bắt đầu bằng số 0 và có đúng 10 chữ số.',
+            'SoDienThoai.unique' => 'Số điện thoại này đã được sử dụng.',
+            'MatKhau.min' => 'Mật khẩu phải có ít nhất 6 ký tự.',
+        ]);
+
         $taiKhoan->update([
             'HoTen' => $request->HoTen,
+            'SoDienThoai' => $request->SoDienThoai,
             'VaiTro' => $request->VaiTro,
             // Chỉ cập nhật mật khẩu nếu có nhập mật khẩu mới
             'MatKhau' => $request->MatKhau ? Hash::make($request->MatKhau) : $taiKhoan->MatKhau,
