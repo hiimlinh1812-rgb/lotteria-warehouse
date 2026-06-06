@@ -5,7 +5,7 @@
 @section('content')
 <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
     <div>
-        <h2 class="text-lotteria fw-bold mb-1">Form Nhập kho cho đơn {{ $order->MaDonDatHang }}</h2>
+        <h2 class="text-lotteria fw-bold mb-1">Nhập kho cho đơn {{ $order->MaDonDatHang }}</h2>
     </div>
     <a class="btn btn-outline-secondary" href="{{ route('don-hang.show', $order->MaDonDatHang) }}">Quay lại đối soát</a>
 </div>
