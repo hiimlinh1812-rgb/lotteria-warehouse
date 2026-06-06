@@ -24,7 +24,7 @@
                     <div class="row g-3">
                         <div class="col-md-4">
                             <label for="NgayNhan" class="form-label fw-semibold">Ngày nhận</label>
-                            <input id="NgayNhan" name="NgayNhan" type="date" class="form-control" value="{{ date('Y-m-d') }}" required>
+                            <input id="NgayNhan" name="NgayNhan" type="date" class="form-control" value="{{ old('NgayNhan') }}" data-default-today="true" required>
                         </div>
                         <div class="col-md-8">
                             <label for="GhiChu" class="form-label fw-semibold">Ghi chú</label>
@@ -66,10 +66,10 @@
                                         <input type="number" min="0" name="items[{{ $index }}][SoLuongThucNhan]" class="form-control" value="{{ $item->SoLuongDat }}" required>
                                     </td>
                                     <td>
-                                        <input type="date" name="items[{{ $index }}][NgaySanXuat]" class="form-control" value="{{ date('Y-m-d', strtotime('-30 days')) }}" required>
+                                        <input type="date" name="items[{{ $index }}][NgaySanXuat]" class="form-control" value="{{ old('items.'.$index.'.NgaySanXuat') }}" required>
                                     </td>
                                     <td>
-                                        <input type="date" name="items[{{ $index }}][HanSuDung]" class="form-control" value="{{ date('Y-m-d', strtotime('+90 days')) }}" required>
+                                        <input type="date" name="items[{{ $index }}][HanSuDung]" class="form-control" value="{{ old('items.'.$index.'.HanSuDung') }}" required>
                                     </td>
                                 </tr>
                                 @endforeach
@@ -92,10 +92,33 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Đảm bảo ngày nhận luôn là ngày hiện tại khi mở form theo giờ local của trình duyệt
         const ngayNhanInput = document.getElementById('NgayNhan');
-        if (ngayNhanInput) {
-            const today = new Date().toISOString().split('T')[0];
+        if (ngayNhanInput && !ngayNhanInput.value) {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const today = `${year}-${month}-${day}`;
             ngayNhanInput.value = today;
+            console.log('Set NgayNhan to:', today);
         }
+
+        // Tương tự cho Ngày sản xuất và Hạn sử dụng của các dòng nguyên liệu nếu chưa có giá trị
+        const todayStr = new Date().toISOString().split('T')[0];
+        document.querySelectorAll('input[type="date"]').forEach(input => {
+            if (!input.value) {
+                if (input.name.includes('NgaySanXuat')) {
+                    // Mặc định lùi 30 ngày cho NSX
+                    const d = new Date();
+                    d.setDate(d.getDate() - 30);
+                    input.value = d.toISOString().split('T')[0];
+                } else if (input.name.includes('HanSuDung')) {
+                    // Mặc định tiến 90 ngày cho HSD
+                    const d = new Date();
+                    d.setDate(d.getDate() + 90);
+                    input.value = d.toISOString().split('T')[0];
+                }
+            }
+        });
     });
 </script>
 @endpush
