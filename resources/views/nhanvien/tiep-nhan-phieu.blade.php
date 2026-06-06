@@ -14,13 +14,6 @@
         </div>
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
-            <strong>Thành công!</strong> {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
     <div class="card shadow-sm border-0">
         <div class="card-header bg-lotteria text-white py-2">
             <h6 class="mb-0 fw-bold">Danh sách phiếu đang chờ xử lý</h6>

@@ -161,9 +161,9 @@ class XuatKhoController extends Controller
                 'chitietphieuxuat.SoLuongXuat'
             )
             ->get();
-        $danhSachChoXuat = PhieuXuatKho::where('TrangThai', 'Chờ xuất hàng')->get();
+        $item = $phieuXuat;
 
-        return view('nhanvien.chi-tiet-phieu', compact('phieuXuat', 'chiTietPhieu'));
+        return view('nhanvien.chi-tiet-phieu', compact('phieuXuat', 'chiTietPhieu', 'item'));
     }
 
     /**
