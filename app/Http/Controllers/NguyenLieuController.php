@@ -14,7 +14,7 @@ class NguyenLieuController extends Controller
     {
         // Lấy toàn bộ dữ liệu từ bảng nguyen_lieus
         $danhSachNL = NguyenLieu::all();
-        
+
         // Truyền dữ liệu đó sang file giao diện
         return view('nguyenlieu.index', compact('danhSachNL'));
     }
@@ -50,7 +50,7 @@ class NguyenLieuController extends Controller
             'SoLuongTonKho' => 0,
             'MoTa' => $validated['MoTa'] ?? null,
         ]);
-        
+
         // Lưu xong thì quay tự động quay trở lại trang danh sách
         return redirect('/nguyen-lieu')->with('success', 'Đã thêm nguyên liệu mới thành công.');
     }
@@ -63,7 +63,7 @@ class NguyenLieuController extends Controller
         //
     }
 
-    
+
     // Hàm mở form Sửa nguyên liệu
     public function edit($id)
     {
@@ -87,8 +87,16 @@ class NguyenLieuController extends Controller
     // Hàm Xóa nguyên liệu
     public function destroy($id)
     {
-        $nl = \App\Models\NguyenLieu::findOrFail($id);
-        $nl->delete();
-        return redirect('/nguyen-lieu');
+        try {
+            $nl = \App\Models\NguyenLieu::findOrFail($id);
+            $nl->delete();
+            return redirect('/nguyen-lieu')->with('success', 'Đã xóa nguyên liệu thành công.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Kiểm tra lỗi vi phạm ràng buộc khóa ngoại (Integrity constraint violation)
+            if ($e->getCode() == "23000") {
+                return redirect()->back()->with('error', 'Không thể xóa do nguyên liệu đang được sử dụng trong hệ thống.');
+            }
+            return redirect()->back()->with('error', 'Có lỗi xảy ra khi xóa: ' . $e->getMessage());
+        }
     }
 }

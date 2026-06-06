@@ -121,7 +121,14 @@ class TaiKhoanController extends Controller
      */
     public function destroy(string $MaTaiKhoan)
     {
-        TaiKhoan::findOrFail($MaTaiKhoan)->delete(); // Tìm và xóa
-        return redirect()->route('tai-khoan.index')->with('success', 'Đã xóa!');
+        try {
+            TaiKhoan::findOrFail($MaTaiKhoan)->delete();
+            return redirect()->route('tai-khoan.index')->with('success', 'Đã xóa tài khoản thành công!');
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->getCode() == "23000") {
+                return redirect()->back()->with('error', 'Không thể xóa do tài khoản này đang được sử dụng trong hệ thống (đơn hàng, phiếu nhập/xuất...).');
+            }
+            return redirect()->back()->with('error', 'Có lỗi xảy ra khi xóa: ' . $e->getMessage());
+        }
     }
 }
