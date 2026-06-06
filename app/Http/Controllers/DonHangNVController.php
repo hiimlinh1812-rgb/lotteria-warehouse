@@ -157,7 +157,6 @@ class DonHangNVController extends Controller
             }
 
             // Cập nhật trạng thái đơn hàng
-            $trangThaiMoi = $totalSoLuongDat == $totalSoLuongThucNhan ? self::STATUS_RECEIVED : self::STATUS_WAITING_PROCESS;
             DB::table('DonDatHang')
                 ->where('MaDonDatHang', $order)
                 ->update(['TrangThai' => $trangThaiMoi]);
