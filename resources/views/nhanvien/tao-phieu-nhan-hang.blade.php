@@ -24,7 +24,7 @@
                     <div class="row g-3">
                         <div class="col-md-4">
                             <label for="NgayNhan" class="form-label fw-semibold">Ngày nhận</label>
-                            <input id="NgayNhan" name="NgayNhan" type="date" class="form-control" value="{{ now()->toDateString() }}" required>
+                            <input id="NgayNhan" name="NgayNhan" type="date" class="form-control" value="{{ date('Y-m-d') }}" required>
                         </div>
                         <div class="col-md-8">
                             <label for="GhiChu" class="form-label fw-semibold">Ghi chú</label>
@@ -66,10 +66,10 @@
                                         <input type="number" min="0" name="items[{{ $index }}][SoLuongThucNhan]" class="form-control" value="{{ $item->SoLuongDat }}" required>
                                     </td>
                                     <td>
-                                        <input type="date" name="items[{{ $index }}][NgaySanXuat]" class="form-control" value="{{ now()->subDays(30)->toDateString() }}" required>
+                                        <input type="date" name="items[{{ $index }}][NgaySanXuat]" class="form-control" value="{{ date('Y-m-d', strtotime('-30 days')) }}" required>
                                     </td>
                                     <td>
-                                        <input type="date" name="items[{{ $index }}][HanSuDung]" class="form-control" value="{{ now()->addDays(90)->toDateString() }}" required>
+                                        <input type="date" name="items[{{ $index }}][HanSuDung]" class="form-control" value="{{ date('Y-m-d', strtotime('+90 days')) }}" required>
                                     </td>
                                 </tr>
                                 @endforeach
@@ -86,3 +86,16 @@
     </div>
 </form>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Đảm bảo ngày nhận luôn là ngày hiện tại khi mở form theo giờ local của trình duyệt
+        const ngayNhanInput = document.getElementById('NgayNhan');
+        if (ngayNhanInput) {
+            const today = new Date().toISOString().split('T')[0];
+            ngayNhanInput.value = today;
+        }
+    });
+</script>
+@endpush
