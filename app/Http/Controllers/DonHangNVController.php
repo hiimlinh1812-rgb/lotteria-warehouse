@@ -33,7 +33,7 @@ class DonHangNVController extends Controller
         return view('nhanvien.ds-don-hang', compact('orders'));
     }
 
-    public function show(string $order)
+    public function show($order)
     {
         $orderData = DB::table('DonDatHang as d')
             ->join('TaiKhoan as t', 't.MaTaiKhoan', '=', 'd.MaTaiKhoan')
@@ -52,7 +52,7 @@ class DonHangNVController extends Controller
         return view('nhanvien.tao-phieu-nhan-hang', compact('orderData', 'items'));
     }
 
-    public function store(Request $request, string $order)
+    public function store(Request $request, $order)
     {
         $request->validate([
             'NgayNhan' => 'required|date',

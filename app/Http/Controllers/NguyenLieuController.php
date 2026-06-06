@@ -30,19 +30,29 @@ class NguyenLieuController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(\Illuminate\Http\Request $request)
+    public function store(Request $request)
     {
+        $validated = $request->validate([
+            'MaNguyenLieu' => ['required', 'string', 'max:10', 'unique:NguyenLieu,MaNguyenLieu'],
+            'TenNguyenLieu' => ['required', 'string', 'max:100'],
+            'DonViTinh' => ['required', 'string', 'max:20'],
+            'NhomHang' => ['required', 'string', 'max:50'],
+            'MoTa' => ['nullable', 'string', 'max:255'],
+        ], [
+            'MaNguyenLieu.unique' => 'Không được trùng mã nguyên liệu.',
+        ]);
+
         \App\Models\NguyenLieu::create([
-            'MaNguyenLieu' => $request->input('MaNguyenLieu'),
-            'TenNguyenLieu' => $request->input('TenNguyenLieu'),
-            'DonViTinh' => $request->input('DonViTinh'),
-            'NhomHang' => $request->input('NhomHang'),
+            'MaNguyenLieu' => $validated['MaNguyenLieu'],
+            'TenNguyenLieu' => $validated['TenNguyenLieu'],
+            'DonViTinh' => $validated['DonViTinh'],
+            'NhomHang' => $validated['NhomHang'],
             'SoLuongTonKho' => 0,
-            'MoTa' => $request->input('MoTa'),
+            'MoTa' => $validated['MoTa'] ?? null,
         ]);
         
         // Lưu xong thì quay tự động quay trở lại trang danh sách
-        return redirect('/nguyen-lieu');
+        return redirect('/nguyen-lieu')->with('success', 'Đã thêm nguyên liệu mới thành công.');
     }
 
     /**

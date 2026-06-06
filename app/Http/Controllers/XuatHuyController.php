@@ -86,19 +86,36 @@ class XuatHuyController extends Controller
     }
     public function show($id)
     {
+        $headerTable = $this->resolveExistingTable(['PhieuXuatHuy', 'phieuxuathuy']);
+        $detailTable = $this->resolveExistingTable(['ChiTietPhieuHuy', 'chitietphieuhuy']);
+        $ingredientTable = $this->resolveExistingTable(['NguyenLieu', 'nguyenlieu']);
+
+        if ($headerTable === null) {
+            return redirect()->route('xuat-huy.index')->with('error', 'Không tìm thấy bảng phiếu xuất hủy trong cơ sở dữ liệu.');
+        }
+
         // 1. Lấy thông tin chung của phiếu hủy
-        $phieuHuy = DB::table('phieuxuathuy')->where('MaPhieuHuy', $id)->first();
+        $phieuHuy = DB::table($headerTable)->where('MaPhieuHuy', $id)->first();
 
         if (!$phieuHuy) {
             return redirect()->route('xuat-huy.index')->with('error', 'Không tìm thấy phiếu xuất hủy này.');
         }
 
         // 2. Lấy danh sách nguyên liệu bên trong phiếu hủy đó
-        $chiTietHuy = DB::table('chitietphieuhuy as ct')
-            ->join('nguyenlieu as nl', 'ct.MaNguyenLieu', '=', 'nl.MaNguyenLieu')
-            ->where('ct.MaPhieuHuy', $id)
-            ->select('ct.*', 'nl.TenNguyenLieu', 'nl.DonViTinh')
-            ->get();
+        if ($detailTable === null) {
+            $chiTietHuy = collect();
+        } else {
+            $query = DB::table($detailTable . ' as ct')
+                ->where('ct.MaPhieuHuy', $id)
+                ->select('ct.*');
+
+            if ($ingredientTable !== null) {
+                $query->leftJoin($ingredientTable . ' as nl', 'ct.MaNguyenLieu', '=', 'nl.MaNguyenLieu')
+                    ->addSelect('nl.TenNguyenLieu', 'nl.DonViTinh');
+            }
+
+            $chiTietHuy = $query->get();
+        }
 
         return view('xuat-huy.show', compact('phieuHuy', 'chiTietHuy'));
     }

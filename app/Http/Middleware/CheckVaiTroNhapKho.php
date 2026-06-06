@@ -22,20 +22,27 @@ class CheckVaiTroNhapKho
     // Map alias → danh sách vai trò được phép
     private const VAI_TRO_MAP = [
         'quan_ly' => [
+            'Cua hang truong',
             'Cửa hàng trưởng',
+            'Quan ly',
+            'Quản lý',
             'Quản lý cửa hàng',
         ],
         'nhan_vien' => [
+            'Cua hang truong',
             'Cửa hàng trưởng',
+            'Quan ly',
+            'Quản lý',
             'Quản lý cửa hàng',
+            'Nhan vien',
             'Nhân viên',
         ],
     ];
 
     public function handle(Request $request, Closure $next, string $level = 'nhan_vien'): Response
     {
-        // Lấy vai trò từ session (do module Auth của nhóm lưu vào)
-        $vaiTro = session('vai_tro');
+        // Ưu tiên vai trò của tài khoản đang đăng nhập, fallback về session cũ nếu có.
+        $vaiTro = auth()->user()->VaiTro ?? session('vai_tro');
 
         if (!$vaiTro) {
             return redirect()->route('login')

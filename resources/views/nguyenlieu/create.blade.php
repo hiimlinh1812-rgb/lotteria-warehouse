@@ -12,31 +12,34 @@
                     @csrf <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Mã Nguyên Liệu</label>
-                            <input type="text" name="MaNguyenLieu" class="form-control" placeholder="VD: NL001" required>
+                            <input type="text" name="MaNguyenLieu" class="form-control @error('MaNguyenLieu') is-invalid @enderror" placeholder="VD: NL001" value="{{ old('MaNguyenLieu') }}" required>
+                            @error('MaNguyenLieu')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Tên Nguyên Liệu</label>
-                            <input type="text" name="TenNguyenLieu" class="form-control" placeholder="VD: Gà rán róc xương" required>
+                            <input type="text" name="TenNguyenLieu" class="form-control" placeholder="VD: Gà rán róc xương" value="{{ old('TenNguyenLieu') }}" required>
                         </div>
                     </div>
 
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Đơn vị tính</label>
-                            <input type="text" name="DonViTinh" class="form-control" placeholder="VD: Kg, Túi, Hộp" required>
+                            <input type="text" name="DonViTinh" class="form-control" placeholder="VD: Kg, Túi, Hộp" value="{{ old('DonViTinh') }}" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Nhóm hàng</label>
                             <select name="NhomHang" class="form-select">
-                                <option value="Hàng đông">Hàng đông</option>
-                                <option value="Hàng khô">Hàng khô</option>
+                                <option value="Hàng đông" {{ old('NhomHang') == 'Hàng đông' ? 'selected' : '' }}>Hàng đông</option>
+                                <option value="Hàng khô" {{ old('NhomHang') == 'Hàng khô' ? 'selected' : '' }}>Hàng khô</option>
                             </select>
                         </div>
                     </div>
 
                     <div class="mb-4">
                         <label class="form-label fw-semibold">Mô tả thêm</label>
-                        <textarea name="MoTa" class="form-control" rows="2" placeholder="Ghi chú về bảo quản..."></textarea>
+                        <textarea name="MoTa" class="form-control" rows="2" placeholder="Ghi chú về bảo quản...">{{ old('MoTa') }}</textarea>
                     </div>
 
                     <div class="d-flex justify-content-end">

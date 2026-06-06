@@ -55,12 +55,12 @@ Route::middleware(['auth', 'can:isManagementUser'])->group(function () {
     Route::get('/dashboard/thong-ke-ton-kho', [KiemKeKhoChinhController::class, 'thongKeTonKho'])->name('cht.khochinh.thongke');
     Route::get('/giai-trinh', [GiaiTrinhController::class, 'index'])->name('giai-trinh.index');
     Route::get('/xuat-huy', [XuatHuyController::class, 'index'])->name('xuat-huy.index');
+    Route::get('/xuat-huy/{id}', [XuatHuyController::class, 'show'])->name('xuat-huy.show');
 });
 
 Route::middleware(['auth', 'can:isCuaHangTruong'])->group(function () {
     Route::resource('nguyen-lieu', NguyenLieuController::class);
     Route::resource('tai-khoan', TaiKhoanController::class);
-    Route::get('/xuat-huy/{id}', [XuatHuyController::class, 'show'])->name('xuat-huy.show');
 });
 
 require __DIR__ . '/nhap_kho.php';
