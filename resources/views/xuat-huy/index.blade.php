@@ -73,28 +73,37 @@
                         <th>Tổng SL hủy</th>
                         <th>Trạng thái</th>
                         <th>Lý do hủy</th>
-                    </tr>
+                        <th class="text-center">Hành động</th> </tr>
                 </thead>
                 <tbody>
                     @forelse ($recentPhieuHuy as $phieu)
                         <tr>
-                            <td class="fw-bold">{{ $phieu->MaPhieuHuy }}</td>
+                            <td class="fw-bold">
+                                <a href="{{ route('xuat-huy.show', $phieu->MaPhieuHuy) }}" class="text-danger text-decoration-none">
+                                    {{ $phieu->MaPhieuHuy }}
+                                </a>
+                            </td>
                             <td>{{ $phieu->NgayTao ? \Carbon\Carbon::parse($phieu->NgayTao)->format('d/m/Y') : '-' }}</td>
                             <td>{{ $phieu->NguoiTao ?? '-' }}</td>
                             <td>{{ $phieu->MaPhieuKiemKe ?: '-' }}</td>
                             <td>{{ $phieu->LoaiKiemKe ?? '-' }}</td>
                             <td>{{ $phieu->SoDongNguyenLieu ?? 0 }}</td>
-                            <td>{{ $phieu->TongSoLuongHuy ?? 0 }}</td>
+                            <td class="text-danger fw-bold">{{ $phieu->TongSoLuongHuy ?? 0 }}</td>
                             <td>
                                 <span class="badge {{ $statusClasses[$phieu->TrangThai] ?? 'bg-secondary' }}">
                                     {{ $phieu->TrangThai ?: 'Chưa rõ' }}
                                 </span>
                             </td>
                             <td>{{ $phieu->LyDoHuy ?: '-' }}</td>
+                            <td class="text-center">
+                                <a href="{{ route('xuat-huy.show', $phieu->MaPhieuHuy) }}" class="btn btn-sm btn-outline-danger fw-bold">
+                                    Chi tiết &rarr;
+                                </a>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="text-center text-muted py-5">
+                            <td colspan="10" class="text-center text-muted py-5">
                                 Chưa có dữ liệu phiếu xuất hủy để hiển thị.
                             </td>
                         </tr>

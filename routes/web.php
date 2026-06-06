@@ -60,9 +60,10 @@ Route::middleware(['auth', 'can:isManagementUser'])->group(function () {
 Route::middleware(['auth', 'can:isCuaHangTruong'])->group(function () {
     Route::resource('nguyen-lieu', NguyenLieuController::class);
     Route::resource('tai-khoan', TaiKhoanController::class);
+    Route::get('/xuat-huy/{id}', [XuatHuyController::class, 'show'])->name('xuat-huy.show');
 });
 
-require __DIR__.'/nhap_kho.php';
+require __DIR__ . '/nhap_kho.php';
 // 4. Route cho Quản lý
 Route::middleware(['auth', 'can:isQuanLy'])->group(function () {
     Route::prefix('don-hang')->name('don-hang.')->group(function () {

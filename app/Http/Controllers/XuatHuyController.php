@@ -84,6 +84,24 @@ class XuatHuyController extends Controller
 
         return view('xuat-huy.index', compact('summary', 'recentPhieuHuy'));
     }
+    public function show($id)
+    {
+        // 1. Lấy thông tin chung của phiếu hủy
+        $phieuHuy = DB::table('phieuxuathuy')->where('MaPhieuHuy', $id)->first();
+
+        if (!$phieuHuy) {
+            return redirect()->route('xuat-huy.index')->with('error', 'Không tìm thấy phiếu xuất hủy này.');
+        }
+
+        // 2. Lấy danh sách nguyên liệu bên trong phiếu hủy đó
+        $chiTietHuy = DB::table('chitietphieuhuy as ct')
+            ->join('nguyenlieu as nl', 'ct.MaNguyenLieu', '=', 'nl.MaNguyenLieu')
+            ->where('ct.MaPhieuHuy', $id)
+            ->select('ct.*', 'nl.TenNguyenLieu', 'nl.DonViTinh')
+            ->get();
+
+        return view('xuat-huy.show', compact('phieuHuy', 'chiTietHuy'));
+    }
 
     private function resolveExistingTable(array $candidates): ?string
     {

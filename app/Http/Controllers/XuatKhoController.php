@@ -69,7 +69,7 @@ class XuatKhoController extends Controller
                 'MaPhieuXuat' => $maPhieuXuat,
                 'NgayXuat'    => Carbon::today()->format('Y-m-d'),
                 'TrangThai'   => 'Chờ xuất hàng',
-                'MaTaiKhoan'  => 'QL001'
+                'MaTaiKhoan'  => auth()->check() ? auth()->user()->MaTaiKhoan : 'QL001' // Tự động lấy user đang đăng nhập
             ]);
 
             foreach ($request->input('nguyen_lieu') as $maNguyenLieu => $soLuongYeuCau) {
@@ -144,7 +144,6 @@ class XuatKhoController extends Controller
 
     /**
      * Màn hình "Chi tiết phiếu xuất kho" (Giao diện dành cho Nhân viên)
-     * ĐÃ FIX LỖI TÊN BẢNG (viết liền, không hoa)
      */
     public function show(string $id)
     {
@@ -184,7 +183,6 @@ class XuatKhoController extends Controller
             }
 
             foreach ($request->input('thuc_lay') as $maLoHang => $soLuongThucTe) {
-                // Ép kiểu về số nguyên để an toàn tính toán
                 $soLuongThucTe = (int) $soLuongThucTe;
                 if ($soLuongThucTe < 0) continue;
 
@@ -194,22 +192,25 @@ class XuatKhoController extends Controller
 
                 if (!$chiTiet) continue;
 
-                $loHang = LoHang::where('MaLoHang', $maLoHang)->first();
-                if (!$loHang) continue;
-
-                if ($loHang->SoLuongConLai < $soLuongThucTe) {
+                // 1. KIỂM TRA RÀNG BUỘC CỨNG: Thực lấy phải bằng Yêu cầu
+                if ($soLuongThucTe != $chiTiet->SoLuongXuat) {
                     DB::rollBack();
                     return redirect()->back()->withErrors([
-                        'error' => 'Số lượng thực lấy vượt quá tồn kho hiện có của lô ' . $maLoHang . '. Vui lòng kiểm tra lại số lượng nhập.'
+                        'error' => 'Lỗi tại lô ' . $maLoHang . ': Số lượng thực lấy (' . $soLuongThucTe . ') phải khớp chính xác với yêu cầu hệ thống chỉ định (' . $chiTiet->SoLuongXuat . '). Vui lòng xuất đúng số lượng!'
                     ]);
                 }
 
-                // 1. Cập nhật số lượng thực lấy
-                $chiTiet->update([
-                    'SoLuongXuat' => $soLuongThucTe
-                ]);
+                $loHang = LoHang::where('MaLoHang', $maLoHang)->first();
+                if (!$loHang) continue;
 
                 // 2. Trừ kho lô hàng
+                if ($loHang->SoLuongConLai < $soLuongThucTe) {
+                    DB::rollBack();
+                    return redirect()->back()->withErrors([
+                        'error' => 'Số lượng tồn kho hiện tại của lô ' . $maLoHang . ' không đủ để trừ. Dữ liệu kho có thể đang bị sai lệch.'
+                    ]);
+                }
+
                 $loHang->SoLuongConLai -= $soLuongThucTe;
                 if ($loHang->SoLuongConLai == 0) {
                     $loHang->TrangThai = 'Hết hàng';
@@ -227,13 +228,13 @@ class XuatKhoController extends Controller
                 }
             }
 
-            // Đổi trạng thái phiếu
+            // 4. Đổi trạng thái phiếu
             $phieuXuat->update([
                 'TrangThai' => 'Hoàn tất'
             ]);
 
             DB::commit();
-            return redirect()->route('nhanvien.phieuxuat')->with('success', 'Xác nhận hoàn thành xuất hàng thành công. Hệ thống đã tự động cập nhật số liệu kho thực tế.');
+            return redirect()->route('nhanvien.phieuxuat')->with('success', 'Xác nhận hoàn thành xuất hàng thành công. Hệ thống đã tự động trừ tồn kho nguyên liệu.');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->withErrors([
@@ -241,6 +242,10 @@ class XuatKhoController extends Controller
             ]);
         }
     }
+
+    /**
+     * Xem chi tiết phiếu dành cho Quản lý
+     */
     public function quanLyShow(string $id)
     {
         $phieuXuat = PhieuXuatKho::where('MaPhieuXuat', $id)->firstOrFail();

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Carbon\Carbon;
 
 class KiemKeBepController extends Controller
 {
@@ -47,18 +48,26 @@ class KiemKeBepController extends Controller
                 $wasteQtyMap = DB::table($wasteDetailTable)
                     ->where('MaPhieuHuy', $wasteReport->MaPhieuHuy)
                     ->pluck('SoLuongHuy', 'MaNguyenLieu')
-                    ->map(fn ($value) => (int) $value)
+                    ->map(fn($value) => (int) $value)
                     ->toArray();
 
                 $wasteReasonMap = $this->parseWasteReasons($wasteReport->LyDoHuy);
             }
         }
 
-        $nguyenLieusDb = $ingredientTable !== null
-            ? DB::table($ingredientTable)->orderBy('TenNguyenLieu')->get()
+        // Lấy danh sách nguyên liệu đã xuất cho bếp hôm nay
+        $inventorySnapshot = $this->buildKitchenStockSnapshot(now()->toDateString(), $reportTable, $detailTable);
+        $maNguyenLieuTrongNgay = array_keys($inventorySnapshot['issued']);
+
+        // Gộp thêm nguyên liệu của phiếu bị từ chối (để hiển thị lại cho nhân viên sửa)
+        if ($detailMap->isNotEmpty()) {
+            $maNguyenLieuTrongNgay = array_unique(array_merge($maNguyenLieuTrongNgay, $detailMap->keys()->toArray()));
+        }
+
+        $nguyenLieusDb = $ingredientTable !== null && !empty($maNguyenLieuTrongNgay)
+            ? DB::table($ingredientTable)->whereIn('MaNguyenLieu', $maNguyenLieuTrongNgay)->orderBy('TenNguyenLieu')->get()
             : collect();
 
-        $inventorySnapshot = $this->buildKitchenStockSnapshot(now()->toDateString(), $reportTable, $detailTable);
         $nguyenLieuForm = [];
         foreach ($nguyenLieusDb as $nguyenLieu) {
             $chiTiet = $detailMap->get($nguyenLieu->MaNguyenLieu);
@@ -66,8 +75,6 @@ class KiemKeBepController extends Controller
             $nguyenLieuForm[] = [
                 'ma_nl' => $nguyenLieu->MaNguyenLieu,
                 'ten_nl' => $nguyenLieu->TenNguyenLieu,
-                'don_vi_tinh' => $nguyenLieu->DonViTinh ?? '',
-                'so_luong_he_thong' => (int) ($inventorySnapshot['system'][$nguyenLieu->MaNguyenLieu] ?? ($chiTiet->SoLuongHeThong ?? 0)),
                 'old_hoan_kho' => (int) ($chiTiet->SoLuongThucTe ?? 0),
                 'old_hang_huy' => (int) ($wasteQtyMap[$nguyenLieu->MaNguyenLieu] ?? 0),
                 'old_ly_do_huy' => $wasteReasonMap[$nguyenLieu->MaNguyenLieu] ?? '',
@@ -119,8 +126,8 @@ class KiemKeBepController extends Controller
         if ($validationMessages !== []) {
             return back()->withErrors($validationMessages)->withInput();
         }
-        DB::transaction(function () use ($request, $requestKiemKe, $ingredientMap, $reportTable, $detailTable, $wasteHeaderTable, $wasteDetailTable) {
-            $inventorySnapshot = $this->buildKitchenStockSnapshot(now()->toDateString(), $reportTable, $detailTable);
+
+        DB::transaction(function () use ($request, $requestKiemKe, $reportTable, $detailTable, $wasteHeaderTable, $wasteDetailTable) {
             $maPhieuKiemKe = $request->input('ma_phieu_cu');
 
             if ($maPhieuKiemKe) {
@@ -171,20 +178,17 @@ class KiemKeBepController extends Controller
             $wasteReasonLines = [];
 
             foreach ($requestKiemKe as $maNguyenLieu => $data) {
-                $ingredient = $ingredientMap->get($maNguyenLieu);
-                $soLuongHeThong = (int) ($inventorySnapshot['system'][$maNguyenLieu] ?? 0);
                 $hoanKho = (int) ($data['hoan_kho'] ?? 0);
                 $hangHuy = (int) ($data['hang_huy'] ?? 0);
-                $chenhLech = ($hoanKho + $hangHuy) - $soLuongHeThong;
-                $tinhTrang = $chenhLech === 0 ? $this->matchExact() : ($chenhLech > 0 ? $this->matchOver() : $this->matchUnder());
 
+                // Lưu dữ liệu bếp cung cấp, bỏ qua Tồn hệ thống và Chênh lệch
                 DB::table($detailTable)->insert([
                     'MaPhieuKiemKe' => $maPhieuKiemKe,
                     'MaNguyenLieu' => $maNguyenLieu,
-                    'SoLuongHeThong' => $soLuongHeThong,
+                    'SoLuongHeThong' => 0,
                     'SoLuongThucTe' => $hoanKho,
-                    'ChenhLech' => $chenhLech,
-                    'TinhTrang' => $tinhTrang,
+                    'ChenhLech' => 0,
+                    'TinhTrang' => 'Ghi nhận',
                 ]);
 
                 if ($hangHuy > 0) {
@@ -197,6 +201,7 @@ class KiemKeBepController extends Controller
                 }
             }
 
+            // Xử lý tạo phiếu xuất hủy đính kèm nếu có
             if ($wasteItems !== []) {
                 $maPhieuHuy = $this->generateNextCode($wasteHeaderTable, 'MaPhieuHuy', 'PH');
 
@@ -221,7 +226,7 @@ class KiemKeBepController extends Controller
 
         return redirect()
             ->route('kiemke.bep')
-            ->with('success', 'Báo cáo kiểm kê cuối ngày đã được tạo thành công với trạng thái Chờ duyệt.');
+            ->with('success', 'Báo cáo kiểm kê cuối ngày đã được gửi cho Quản lý. Vui lòng chờ duyệt.');
     }
 
     public function danhSachBaoCao()
@@ -258,15 +263,16 @@ class KiemKeBepController extends Controller
             ->get();
 
         foreach ($phieus as $phieu) {
+            // Chỉ lấy để biết số lượng xuất trong ngày
             $inventorySnapshot = $this->buildKitchenStockSnapshot($phieu->NgayKiemKe, $reportTable, $detailTable);
+
             $detailsRaw = DB::table($detailTable . ' as ct')
                 ->join($ingredientTable . ' as nl', 'ct.MaNguyenLieu', '=', 'nl.MaNguyenLieu')
                 ->where('ct.MaPhieuKiemKe', $phieu->MaPhieuKiemKe)
                 ->select(
                     'ct.MaNguyenLieu',
                     'ct.SoLuongThucTe',
-                    'nl.TenNguyenLieu',
-                    'nl.DonViTinh'
+                    'nl.TenNguyenLieu'
                 )
                 ->get();
 
@@ -297,33 +303,16 @@ class KiemKeBepController extends Controller
             }
 
             $details = [];
-            $isFullyMatched = true;
-
             foreach ($detailsRaw as $detail) {
-                $tonDau = (int) ($inventorySnapshot['opening'][$detail->MaNguyenLieu] ?? 0);
                 $xuatTrongNgay = (int) ($inventorySnapshot['issued'][$detail->MaNguyenLieu] ?? 0);
-                $soSachHeThong = (int) ($inventorySnapshot['system'][$detail->MaNguyenLieu] ?? 0);
                 $soLuongHuyTrongCa = (int) ($qtyHuyMap[$detail->MaNguyenLieu] ?? 0);
-                $chenhLech = ($detail->SoLuongThucTe + $soLuongHuyTrongCa) - $soSachHeThong;
-                $tinhTrang = $chenhLech === 0 ? $this->matchExact() : ($chenhLech > 0 ? $this->matchOver() : $this->matchUnder());
-
-                if ($chenhLech !== 0) {
-                    $isFullyMatched = false;
-                }
 
                 $details[] = [
                     'MaNguyenLieu' => $detail->MaNguyenLieu,
                     'TenNguyenLieu' => $detail->TenNguyenLieu,
-                    'DonViTinh' => $detail->DonViTinh ?? '',
-                    'TonDau' => $tonDau,
-                    'NhapKho' => 0,
                     'XuatTrongNgay' => $xuatTrongNgay,
-                    'SoLuongHeThong' => $soSachHeThong,
                     'ThucTeDem' => (int) $detail->SoLuongThucTe,
                     'HangHuy' => $soLuongHuyTrongCa,
-                    'ChenhLech' => $chenhLech,
-                    'TinhTrang' => $tinhTrang,
-                    'KetLuan' => $this->varianceLabel($chenhLech),
                 ];
             }
 
@@ -336,14 +325,13 @@ class KiemKeBepController extends Controller
                 'Details' => $details,
                 'PhieuHuy' => $phieuHuy,
                 'PhieuHuyDetails' => $phieuHuyDetails,
-                'isFullyMatched' => $isFullyMatched,
             ];
         }
 
         return view('kiemke.danh_sach_bep', compact('danhSachPhiu'));
     }
 
-    public function tuChoiBaoCao(Request $request, $maPhieu)
+    public function tuChoiBaoCao(Request $request, string $maPhieu)
     {
         $request->validate([
             'ghi_chu_tu_choi' => ['required', 'string', 'max:255'],
@@ -372,13 +360,12 @@ class KiemKeBepController extends Controller
         return back()->with('success', 'Đã từ chối báo cáo kiểm kê cuối ngày và yêu cầu nhân viên hiệu chỉnh lại số liệu.');
     }
 
-    public function chotCaBaoCao($maPhieu)
+    public function chotCaBaoCao(string $maPhieu)
     {
         $reportTable = $this->resolveExistingTable(['PhieuKiemKe', 'phieukiemke']);
         $detailTable = $this->resolveExistingTable(['ChiTietPhieuKiemKeCuoiNgay', 'chitietphieukiemkecuoingay']);
         $ingredientTable = $this->resolveExistingTable(['NguyenLieu', 'nguyenlieu']);
         $wasteHeaderTable = $this->resolveExistingTable(['PhieuXuatHuy', 'phieuxuathuy']);
-        $wasteDetailTable = $this->resolveExistingTable(['ChiTietPhieuHuy', 'chitietphieuhuy']);
 
         if ($reportTable === null || $detailTable === null || $ingredientTable === null) {
             return back()->with('error', 'Không tìm thấy đủ dữ liệu để chốt ca.');
@@ -388,27 +375,10 @@ class KiemKeBepController extends Controller
             ? DB::table($wasteHeaderTable)->where('MaPhieuKiemKe', $maPhieu)->first()
             : null;
 
-        $qtyHuyMap = [];
-        if ($phieuHuy && $wasteDetailTable !== null) {
-            $qtyHuyMap = DB::table($wasteDetailTable)
-                ->where('MaPhieuHuy', $phieuHuy->MaPhieuHuy)
-                ->pluck('SoLuongHuy', 'MaNguyenLieu')
-                ->map(fn ($value) => (int) $value)
-                ->toArray();
-        }
-
         $details = DB::table($detailTable)->where('MaPhieuKiemKe', $maPhieu)->get();
-        $report = DB::table($reportTable)->where('MaPhieuKiemKe', $maPhieu)->first();
-        $inventorySnapshot = $this->buildKitchenStockSnapshot($report->NgayKiemKe ?? now()->toDateString(), $reportTable, $detailTable);
-        foreach ($details as $detail) {
-            $soLuongHuyTrongCa = (int) ($qtyHuyMap[$detail->MaNguyenLieu] ?? 0);
-            $soSachHeThong = (int) ($inventorySnapshot['system'][$detail->MaNguyenLieu] ?? 0);
-            if (($detail->SoLuongThucTe + $soLuongHuyTrongCa) !== $soSachHeThong) {
-                return back()->with('warning', 'Không thể chốt ca vì số liệu hoàn kho và hàng hủy vẫn chưa khớp với số liệu hệ thống.');
-            }
-        }
 
         DB::transaction(function () use ($maPhieu, $details, $reportTable, $ingredientTable, $wasteHeaderTable, $phieuHuy) {
+            // Cập nhật phiếu sang Đã duyệt
             DB::table($reportTable)
                 ->where('MaPhieuKiemKe', $maPhieu)
                 ->update(['TrangThai' => $this->statusApproved()]);
@@ -419,66 +389,39 @@ class KiemKeBepController extends Controller
                     ->update(['TrangThai' => $this->statusApproved()]);
             }
 
+            // Cộng lại lượng Bếp hoàn kho vào Tồn tổng
             foreach ($details as $detail) {
-                DB::table($ingredientTable)
-                    ->where('MaNguyenLieu', $detail->MaNguyenLieu)
-                    ->update([
-                        'SoLuongTonKho' => (int) $detail->SoLuongThucTe,
-                    ]);
+                if ($detail->SoLuongThucTe > 0) {
+                    DB::table($ingredientTable)
+                        ->where('MaNguyenLieu', $detail->MaNguyenLieu)
+                        ->increment('SoLuongTonKho', (int) $detail->SoLuongThucTe);
+                }
             }
         });
 
-        return back()->with('success', 'Đã xác nhận và chốt ca thành công. Số lượng hoàn kho đã được cập nhật thành tồn đầu ngày cho chu kỳ tiếp theo.');
+        return back()->with('success', 'Đã xác nhận khớp và chốt ca thành công. Số lượng Bếp hoàn kho đã được cộng trả lại vào Tồn Kho Tổng.');
     }
 
     private function parseWasteReasons(?string $combinedReasons): array
     {
-        if (! $combinedReasons) {
-            return [];
-        }
-
+        if (! $combinedReasons) return [];
         $result = [];
         foreach (explode('|', $combinedReasons) as $segment) {
             $segment = trim($segment);
-            if ($segment === '' || ! str_contains($segment, ':')) {
-                continue;
-            }
-
+            if ($segment === '' || ! str_contains($segment, ':')) continue;
             [$maNguyenLieu, $lyDo] = array_map('trim', explode(':', $segment, 2));
             if ($maNguyenLieu !== '') {
                 $result[$maNguyenLieu] = $lyDo;
             }
         }
-
         return $result;
     }
 
     private function buildKitchenStockSnapshot(string $reportDate, ?string $reportTable = null, ?string $detailTable = null): array
     {
-        $reportTable ??= $this->resolveExistingTable(['PhieuKiemKe', 'phieukiemke']);
-        $detailTable ??= $this->resolveExistingTable(['ChiTietPhieuKiemKeCuoiNgay', 'chitietphieukiemkecuoingay']);
         $exportHeaderTable = $this->resolveExistingTable(['PhieuXuatKho', 'phieuxuatkho']);
         $exportDetailTable = $this->resolveExistingTable(['ChiTietPhieuXuat', 'chitietphieuxuat']);
         $batchTable = $this->resolveExistingTable(['LoHang', 'lohang']);
-
-        $opening = [];
-        if ($reportTable !== null && $detailTable !== null) {
-            $previousApprovedReport = DB::table($reportTable)
-                ->where('LoaiKiemKe', $this->reportTypeEndOfDay())
-                ->where('TrangThai', $this->statusApproved())
-                ->whereDate('NgayKiemKe', '<', $reportDate)
-                ->orderByDesc('NgayKiemKe')
-                ->orderByDesc('MaPhieuKiemKe')
-                ->first();
-
-            if ($previousApprovedReport) {
-                $opening = DB::table($detailTable)
-                    ->where('MaPhieuKiemKe', $previousApprovedReport->MaPhieuKiemKe)
-                    ->pluck('SoLuongThucTe', 'MaNguyenLieu')
-                    ->map(fn ($value) => (int) $value)
-                    ->toArray();
-            }
-        }
 
         $issued = [];
         if ($exportHeaderTable !== null && $exportDetailTable !== null && $batchTable !== null) {
@@ -490,19 +433,13 @@ class KiemKeBepController extends Controller
                 ->groupBy('lh.MaNguyenLieu')
                 ->select('lh.MaNguyenLieu as MaNguyenLieu', DB::raw('SUM(ct.SoLuongXuat) as TongSoLuongXuat'))
                 ->pluck('TongSoLuongXuat', 'MaNguyenLieu')
-                ->map(fn ($value) => (int) $value)
+                ->map(fn($value) => (int) $value)
                 ->toArray();
         }
 
-        $system = [];
-        foreach (array_unique(array_merge(array_keys($opening), array_keys($issued))) as $maNguyenLieu) {
-            $system[$maNguyenLieu] = (int) ($opening[$maNguyenLieu] ?? 0) + (int) ($issued[$maNguyenLieu] ?? 0);
-        }
-
+        // Bỏ logic opening, system đi cho gọn nhẹ vì bếp không dùng nữa
         return [
-            'opening' => $opening,
             'issued' => $issued,
-            'system' => $system,
         ];
     }
 
@@ -524,11 +461,8 @@ class KiemKeBepController extends Controller
     private function resolveExistingTable(array $candidates): ?string
     {
         foreach ($candidates as $table) {
-            if (Schema::hasTable($table)) {
-                return $table;
-            }
+            if (Schema::hasTable($table)) return $table;
         }
-
         return null;
     }
 
@@ -536,46 +470,18 @@ class KiemKeBepController extends Controller
     {
         return "Cu\u{1ED1}i ng\u{00E0}y";
     }
-
     private function statusPending(): string
     {
         return "Ch\u{1EDD} duy\u{1EC7}t";
     }
-
     private function statusRejected(): string
     {
         return "T\u{1EEB} ch\u{1ED1}i";
     }
-
     private function statusApproved(): string
     {
         return "\u{0110}\u{00E3} duy\u{1EC7}t";
     }
-
-    private function matchExact(): string
-    {
-        return "Kh\u{1EDB}p";
-    }
-
-    private function matchOver(): string
-    {
-        return "Th\u{1EEB}a";
-    }
-
-    private function matchUnder(): string
-    {
-        return "Thi\u{1EBF}u";
-    }
-
-    private function varianceLabel(int $chenhLech): string
-    {
-        if ($chenhLech === 0) {
-            return $this->matchExact();
-        }
-
-        return $chenhLech > 0 ? 'Thừa hàng' : 'Thiếu hàng';
-    }
-
     private function completedExportStatuses(): array
     {
         return ['Hoàn tất', 'Đã xuất', 'Hoàn thành'];

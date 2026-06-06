@@ -41,7 +41,7 @@
             <div id="searchDropdown" class="list-group search-dropdown w-100"></div>
         </div>
         <div class="search-help mt-2">
-            Hiện có {{ $nguyenLieuCoTheXuat->count() }} nguyên liệu còn tồn kho trong cơ sở dữ liệu và sẵn sàng để xuất.
+            Hiện có {{ $nguyenLieuCoTheXuat->count() }} nguyên liệu còn tồn kho và sẵn sàng để xuất.
         </div>
     </div>
 </div>
@@ -97,8 +97,19 @@
 
         let selectedItems = new Set();
 
+        // Hàm triệt tiêu dấu tiếng Việt và đưa về chữ thường
+        function xoaDauTiengViet(str) {
+            if (!str) return "";
+            return str.normalize('NFD')
+                      .replace(/[\u0300-\u036f]/g, '')
+                      .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+                      .toLowerCase()
+                      .trim();
+        }
+
         function renderDropdown(showAll = false) {
-            const keyword = searchInput.value.toLowerCase().trim();
+            // Lấy từ khóa và ép về dạng không dấu
+            const keyword = xoaDauTiengViet(searchInput.value);
             searchDropdown.innerHTML = '';
 
             if (!showAll && keyword.length === 0) {
@@ -115,8 +126,11 @@
                     return true;
                 }
 
-                return nl.TenNguyenLieu.toLowerCase().includes(keyword) ||
-                    nl.MaNguyenLieu.toLowerCase().includes(keyword);
+                // Ép tên và mã nguyên liệu về dạng không dấu để đem ra so sánh với từ khóa
+                const tenNL = xoaDauTiengViet(nl.TenNguyenLieu);
+                const maNL = xoaDauTiengViet(nl.MaNguyenLieu);
+
+                return tenNL.includes(keyword) || maNL.includes(keyword);
             });
 
             if (filtered.length === 0) {

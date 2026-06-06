@@ -87,6 +87,7 @@
                 ['label' => 'Tổng quan', 'route' => route('dashboard'), 'active' => request()->routeIs('dashboard')],
                 ['label' => 'Đơn hàng', 'route' => route('purchase-orders.index'), 'active' => request()->routeIs('purchase-orders.*')],
                 ['label' => 'Phiếu xuất hủy', 'route' => route('xuat-huy.index'), 'active' => request()->routeIs('xuat-huy.*')],
+                ['label' => 'Phiếu giải trình', 'route' => route('giai-trinh.index'), 'active' => request()->routeIs('giai-trinh.*')],
                 ['label' => 'Nguyên liệu gốc', 'route' => route('nguyen-lieu.index'), 'active' => request()->routeIs('nguyen-lieu.*')],
                 ['label' => 'Tài khoản', 'route' => route('tai-khoan.index'), 'active' => request()->routeIs('tai-khoan.*')],
             ];
