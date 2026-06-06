@@ -34,7 +34,7 @@
                 <div class="row g-3">
                     <div class="col-md-4">
                         <label for="NgayNhap" class="form-label fw-semibold">Ngày nhập kho</label>
-                        <input id="NgayNhap" type="date" name="NgayNhap" class="form-control" value="{{ old('NgayNhap', now()->toDateString()) }}" required>
+                        <input id="NgayNhap" type="date" name="NgayNhap" class="form-control bg-light" value="{{ old('NgayNhap', now()->toDateString()) }}" readonly required style="pointer-events: none;" tabindex="-1">
                     </div>
                     <div class="col-md-4">
                         <label for="MaTaiKhoan" class="form-label fw-semibold">Người nhập kho</label>

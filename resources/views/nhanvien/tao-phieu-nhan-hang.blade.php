@@ -139,9 +139,13 @@
                 hsdInput.setCustomValidity('');
 
                 if (nsxValue && hsdValue) {
-                    if (nsxValue >= hsdValue) {
-                        hsdInput.setCustomValidity('Ngày sản xuất phải nhỏ hơn Hạn sử dụng');
-                    }
+                        if (nsxValue > todayStr) {
+                            nsxInput.setCustomValidity('Ngày sản xuất không được lớn hơn ngày hiện tại');
+                        }
+
+                        if (nsxValue >= hsdValue) {
+                            hsdInput.setCustomValidity('Ngày sản xuất phải nhỏ hơn Hạn sử dụng');
+                        }
                     
                     if (hsdValue <= todayStr) {
                         hsdInput.setCustomValidity('Hạn sử dụng phải lớn hơn ngày hiện tại của máy tính người dùng');

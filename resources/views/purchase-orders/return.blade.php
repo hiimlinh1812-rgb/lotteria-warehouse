@@ -33,7 +33,7 @@
                 <div class="row g-3">
                     <div class="col-md-4">
                         <label for="NgayTao" class="form-label fw-semibold">Ngày tạo</label>
-                        <input id="NgayTao" type="date" name="NgayTao" class="form-control" value="{{ old('NgayTao', now()->toDateString()) }}" required>
+                        <input id="NgayTao" type="date" name="NgayTao" class="form-control bg-light" value="{{ old('NgayTao', now()->toDateString()) }}" readonly required style="pointer-events: none;" tabindex="-1">
                     </div>
                     <div class="col-md-4">
                         <label for="LoaiXuLy" class="form-label fw-semibold">Loại xử lý</label>

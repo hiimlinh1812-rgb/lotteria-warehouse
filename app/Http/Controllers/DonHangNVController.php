@@ -59,9 +59,10 @@ class DonHangNVController extends Controller
             'GhiChu' => 'nullable|string|max:255',
             'items' => 'required|array|min:1',
             'items.*.SoLuongThucNhan' => 'required|integer|min:0',
-            'items.*.NgaySanXuat' => 'required|date',
+            'items.*.NgaySanXuat' => 'required|date|before_or_equal:today',
             'items.*.HanSuDung' => 'required|date|after:items.*.NgaySanXuat|after:today',
         ], [
+            'items.*.NgaySanXuat.before_or_equal' => 'Ngày sản xuất không được lớn hơn ngày hiện tại.',
             'items.*.HanSuDung.after' => 'Hạn sử dụng phải lớn hơn Ngày sản xuất và phải lớn hơn ngày hiện tại.',
         ]);
 
