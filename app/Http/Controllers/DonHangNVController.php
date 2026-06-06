@@ -60,7 +60,9 @@ class DonHangNVController extends Controller
             'items' => 'required|array|min:1',
             'items.*.SoLuongThucNhan' => 'required|integer|min:0',
             'items.*.NgaySanXuat' => 'required|date',
-            'items.*.HanSuDung' => 'required|date|after:items.*.NgaySanXuat',
+            'items.*.HanSuDung' => 'required|date|after:items.*.NgaySanXuat|after:today',
+        ], [
+            'items.*.HanSuDung.after' => 'Hạn sử dụng phải lớn hơn Ngày sản xuất và phải lớn hơn ngày hiện tại.',
         ]);
 
         $currentStatus = DB::table('DonDatHang')->where('MaDonDatHang', $order)->value('TrangThai');

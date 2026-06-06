@@ -103,7 +103,12 @@
         }
 
         // Tương tự cho Ngày sản xuất và Hạn sử dụng của các dòng nguyên liệu nếu chưa có giá trị
-        const todayStr = new Date().toISOString().split('T')[0];
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const todayStr = `${year}-${month}-${day}`;
+
         document.querySelectorAll('input[type="date"]').forEach(input => {
             if (!input.value) {
                 if (input.name.includes('NgaySanXuat')) {
@@ -118,6 +123,41 @@
                     input.value = d.toISOString().split('T')[0];
                 }
             }
+        });
+
+        // Validation NSX và HSD
+        function validateNSX_HSD(row) {
+            const nsxInput = row.querySelector('input[name*="[NgaySanXuat]"]');
+            const hsdInput = row.querySelector('input[name*="[HanSuDung]"]');
+            
+            if (nsxInput && hsdInput) {
+                const nsxValue = nsxInput.value;
+                const hsdValue = hsdInput.value;
+
+                // Reset validation
+                nsxInput.setCustomValidity('');
+                hsdInput.setCustomValidity('');
+
+                if (nsxValue && hsdValue) {
+                    if (nsxValue >= hsdValue) {
+                        hsdInput.setCustomValidity('Ngày sản xuất phải nhỏ hơn Hạn sử dụng');
+                    }
+                    
+                    if (hsdValue <= todayStr) {
+                        hsdInput.setCustomValidity('Hạn sử dụng phải lớn hơn ngày hiện tại của máy tính người dùng');
+                    }
+                }
+            }
+        }
+
+        // Gán sự kiện validate cho tất cả các dòng
+        document.querySelectorAll('tbody tr').forEach(row => {
+            const inputs = row.querySelectorAll('input[type="date"]');
+            inputs.forEach(input => {
+                input.addEventListener('change', () => validateNSX_HSD(row));
+            });
+            // Validate lần đầu khi load
+            validateNSX_HSD(row);
         });
     });
 </script>
