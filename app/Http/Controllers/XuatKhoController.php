@@ -165,12 +165,12 @@ class XuatKhoController extends Controller
 
         // Kết hợp dữ liệu (Join) để lấy thông tin trực quan đưa lên form
         $chiTietPhieu = ChiTietPhieuXuat::where('MaPhieuXuat', $id)
-            ->join('lohang', 'chitietphieuxuat.MaLoHang', '=', 'lohang.MaLoHang')
-            ->join('nguyenlieu', 'lohang.MaNguyenLieu', '=', 'nguyenlieu.MaNguyenLieu')
+            ->join('LoHang', 'chitietphieuxuat.MaLoHang', '=', 'LoHang.MaLoHang')
+            ->join('NguyenLieu', 'LoHang.MaNguyenLieu', '=', 'NguyenLieu.MaNguyenLieu')
             ->select(
-                'nguyenlieu.MaNguyenLieu',
-                'nguyenlieu.TenNguyenLieu',
-                'nguyenlieu.DonViTinh',
+                'NguyenLieu.MaNguyenLieu',
+                'NguyenLieu.TenNguyenLieu',
+                'NguyenLieu.DonViTinh',
                 'chitietphieuxuat.MaLoHang',
                 'chitietphieuxuat.SoLuongXuat'
             )
@@ -268,12 +268,12 @@ class XuatKhoController extends Controller
         $phieuXuat = PhieuXuatKho::where('MaPhieuXuat', $id)->firstOrFail();
 
         $chiTietPhieu = ChiTietPhieuXuat::where('MaPhieuXuat', $id)
-            ->join('lohang', 'chitietphieuxuat.MaLoHang', '=', 'lohang.MaLoHang')
-            ->join('nguyenlieu', 'lohang.MaNguyenLieu', '=', 'nguyenlieu.MaNguyenLieu')
+            ->join('LoHang', 'chitietphieuxuat.MaLoHang', '=', 'LoHang.MaLoHang')
+            ->join('NguyenLieu', 'LoHang.MaNguyenLieu', '=', 'NguyenLieu.MaNguyenLieu')
             ->select(
-                'nguyenlieu.MaNguyenLieu',
-                'nguyenlieu.TenNguyenLieu',
-                'nguyenlieu.DonViTinh',
+                'NguyenLieu.MaNguyenLieu',
+                'NguyenLieu.TenNguyenLieu',
+                'NguyenLieu.DonViTinh',
                 'chitietphieuxuat.MaLoHang',
                 'chitietphieuxuat.SoLuongXuat'
             )

@@ -16,7 +16,7 @@ class NguyenLieuController extends Controller
         $danhSachNL = NguyenLieu::all();
 
         // Truyền dữ liệu đó sang file giao diện
-        return view('nguyenlieu.index', compact('danhSachNL'));
+        return view('NguyenLieu.index', compact('danhSachNL'));
     }
 
     /**
@@ -24,7 +24,7 @@ class NguyenLieuController extends Controller
      */
     public function create()
     {
-        return view('nguyenlieu.create');
+        return view('NguyenLieu.create');
     }
 
     /**
@@ -68,7 +68,7 @@ class NguyenLieuController extends Controller
     public function edit($id)
     {
         $nl = \App\Models\NguyenLieu::findOrFail($id);
-        return view('nguyenlieu.edit', compact('nl'));
+        return view('NguyenLieu.edit', compact('nl'));
     }
 
     // Hàm nhận dữ liệu từ form Sửa và cập nhật vào Database

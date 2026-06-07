@@ -247,7 +247,7 @@ class KiemKeKhoChinhController extends Controller
 
     private function normalizedAuditDetails(string $maPhieu): array
     {
-        $lotTable = $this->resolveExistingTable(['LoHang', 'lohang', 'lo_hang']);
+        $lotTable = $this->resolveExistingTable(['LoHang', 'LoHang', 'lo_hang']);
         $details = DB::table('ChiTietPhieuKiemKeDinhKy')
             ->where('MaPhieuKiemKe', $maPhieu)
             ->get();

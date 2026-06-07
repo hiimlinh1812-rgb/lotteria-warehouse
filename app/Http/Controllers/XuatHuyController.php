@@ -88,7 +88,7 @@ class XuatHuyController extends Controller
     {
         $headerTable = $this->resolveExistingTable(['PhieuXuatHuy', 'phieuxuathuy']);
         $detailTable = $this->resolveExistingTable(['ChiTietPhieuHuy', 'chitietphieuhuy']);
-        $ingredientTable = $this->resolveExistingTable(['NguyenLieu', 'nguyenlieu']);
+        $ingredientTable = $this->resolveExistingTable(['NguyenLieu', 'NguyenLieu']);
 
         if ($headerTable === null) {
             return redirect()->route('xuat-huy.index')->with('error', 'Không tìm thấy bảng phiếu xuất hủy trong cơ sở dữ liệu.');

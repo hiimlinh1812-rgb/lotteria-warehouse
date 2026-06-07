@@ -14,7 +14,7 @@ class KiemKeBepController extends Controller
     {
         $reportTable = $this->resolveExistingTable(['PhieuKiemKe', 'phieukiemke']);
         $detailTable = $this->resolveExistingTable(['ChiTietPhieuKiemKeCuoiNgay', 'chitietphieukiemkecuoingay']);
-        $ingredientTable = $this->resolveExistingTable(['NguyenLieu', 'nguyenlieu']);
+        $ingredientTable = $this->resolveExistingTable(['NguyenLieu', 'NguyenLieu']);
         $wasteHeaderTable = $this->resolveExistingTable(['PhieuXuatHuy', 'phieuxuathuy']);
         $wasteDetailTable = $this->resolveExistingTable(['ChiTietPhieuHuy', 'chitietphieuhuy']);
 
@@ -88,7 +88,7 @@ class KiemKeBepController extends Controller
     {
         $reportTable = $this->resolveExistingTable(['PhieuKiemKe', 'phieukiemke']);
         $detailTable = $this->resolveExistingTable(['ChiTietPhieuKiemKeCuoiNgay', 'chitietphieukiemkecuoingay']);
-        $ingredientTable = $this->resolveExistingTable(['NguyenLieu', 'nguyenlieu']);
+        $ingredientTable = $this->resolveExistingTable(['NguyenLieu', 'NguyenLieu']);
         $wasteHeaderTable = $this->resolveExistingTable(['PhieuXuatHuy', 'phieuxuathuy']);
         $wasteDetailTable = $this->resolveExistingTable(['ChiTietPhieuHuy', 'chitietphieuhuy']);
 
@@ -233,7 +233,7 @@ class KiemKeBepController extends Controller
     {
         $reportTable = $this->resolveExistingTable(['PhieuKiemKe', 'phieukiemke']);
         $detailTable = $this->resolveExistingTable(['ChiTietPhieuKiemKeCuoiNgay', 'chitietphieukiemkecuoingay']);
-        $ingredientTable = $this->resolveExistingTable(['NguyenLieu', 'nguyenlieu']);
+        $ingredientTable = $this->resolveExistingTable(['NguyenLieu', 'NguyenLieu']);
         $wasteHeaderTable = $this->resolveExistingTable(['PhieuXuatHuy', 'phieuxuathuy']);
         $wasteDetailTable = $this->resolveExistingTable(['ChiTietPhieuHuy', 'chitietphieuhuy']);
         $accountTable = $this->resolveExistingTable(['TaiKhoan', 'taikhoan']);
@@ -364,7 +364,7 @@ class KiemKeBepController extends Controller
     {
         $reportTable = $this->resolveExistingTable(['PhieuKiemKe', 'phieukiemke']);
         $detailTable = $this->resolveExistingTable(['ChiTietPhieuKiemKeCuoiNgay', 'chitietphieukiemkecuoingay']);
-        $ingredientTable = $this->resolveExistingTable(['NguyenLieu', 'nguyenlieu']);
+        $ingredientTable = $this->resolveExistingTable(['NguyenLieu', 'NguyenLieu']);
         $wasteHeaderTable = $this->resolveExistingTable(['PhieuXuatHuy', 'phieuxuathuy']);
 
         if ($reportTable === null || $detailTable === null || $ingredientTable === null) {
@@ -421,7 +421,7 @@ class KiemKeBepController extends Controller
     {
         $exportHeaderTable = $this->resolveExistingTable(['PhieuXuatKho', 'phieuxuatkho']);
         $exportDetailTable = $this->resolveExistingTable(['ChiTietPhieuXuat', 'chitietphieuxuat']);
-        $batchTable = $this->resolveExistingTable(['LoHang', 'lohang']);
+        $batchTable = $this->resolveExistingTable(['LoHang', 'LoHang']);
 
         $issued = [];
         if ($exportHeaderTable !== null && $exportDetailTable !== null && $batchTable !== null) {
