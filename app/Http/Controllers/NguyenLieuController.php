@@ -16,7 +16,7 @@ class NguyenLieuController extends Controller
         $danhSachNL = NguyenLieu::all();
 
         // Truyền dữ liệu đó sang file giao diện
-        return view('NguyenLieu.index', compact('danhSachNL'));
+        return view('nguyenlieu.index', compact('danhSachNL'));
     }
 
     /**
@@ -24,7 +24,7 @@ class NguyenLieuController extends Controller
      */
     public function create()
     {
-        return view('NguyenLieu.create');
+        return view('nguyenlieu.create');
     }
 
     /**
